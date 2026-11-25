@@ -1,3 +1,6 @@
+
+screen recording and model.safetensors are in Realeases
+
 # INTELLIFIX: AI-Assisted Compiler Error Explanation & Auto-Fix Engine
 
 An advanced, offline compiler diagnostic tool that converts dense and cryptic Python tracebacks into highly interactive, automated hot-fixes. Utilizing a powerful hybrid architecture of **Abstract Syntax Tree (AST) Symbolic Extraction** and **Natural Language Processing (Ollama LLM)**, this engine acts as a 5-quadrant local Web IDE capable of resolving runtime logic, scanning for severe security vulnerabilities, and actively measuring hardware computational efficiency via simulated Green IT telemetry.
