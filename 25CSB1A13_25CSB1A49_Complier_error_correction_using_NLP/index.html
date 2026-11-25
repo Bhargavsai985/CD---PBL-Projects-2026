@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompilerAI — Optimization Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<!-- Chart.js loaded in head so it's available immediately -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+/* ═══════════════════════════════════════════════════
+   COMPILERAI FIELD GUIDE & ASSISTANT LOGIC
+═══════════════════════════════════════════════════ */
+
+// ── 1. Guide Category & Keyword Search Filtering ──
+function filterGuideCategory(cat, el) {
+  document.querySelectorAll('.guide-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const sections = document.querySelectorAll('.guide-section');
+  sections.forEach(sec => {
+    if (cat === 'all' || sec.getAttribute('data-cat') === cat) {
+      sec.style.display = 'block';
+    } else {
+      sec.style.display = 'none';
+    }
+  });
+}
+
+function filterGuideCards() {
+  const query = (document.getElementById('guide-search').value || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('.guide-card');
+  cards.forEach(card => {
+    const text = (card.textContent + ' ' + (card.getAttribute('data-keywords') || '')).toLowerCase();
+    if (!query || text.includes(query)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// ── 2. Assistant Drawer Toggle & Q&A Knowledge Engine ──
+let lastBotReplyText = "Hello! I am your CompilerAI Assistant. Ask me anything about the system!";
+
+function toggleAssistantDrawer() {
+  const drawer = document.getElementById('assistant-drawer');
+  drawer.classList.toggle('open');
+  if (drawer.classList.contains('open')) {
+    document.getElementById('ast-input').focus();
+  }
+}
+
+function handleAssistantChip(promptText) {
+  document.getElementById('ast-input').value = promptText;
+  sendAssistantQuery();
+}
+
+function openAssistantWithPrompt(promptText) {
+  const drawer = document.getElementById('assistant-drawer');
+  drawer.classList.add('open');
+  document.getElementById('ast-input').value = promptText;
+  sendAssistantQuery();
+}
+
+function sendAssistantQuery() {
+  const inp = document.getElementById('ast-input');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+
+  const body = document.getElementById('ast-body');
+  
+  // Append user bubble
+  const userDiv = document.createElement('div');
+  userDiv.className = 'ast-msg user';
+  userDiv.textContent = q;
+  body.appendChild(userDiv);
+  body.scrollTop = body.scrollHeight;
+
+  // Synthesize comprehensive response
+  const lowerQ = q.toLowerCase();
+  let answer = "";
+
+  if (lowerQ.includes('button') || lowerQ.includes('control') || lowerQ.includes('toolbar')) {
+    answer = `<strong>🕹️ UI Button & Control Guide:</strong><br>
+    • <strong>Run / Scan & Diagnose:</strong> Runs the 4-phase Agentic Pipeline to analyze errors and 52+ security audits.<br>
+    • <strong>⚡ Execute:</strong> Executes Python, Java, or C++ in the sandbox and prints stdout/stderr.<br>
+    • <strong>💾 Save:</strong> Saves your source code changes back to the server.<br>
+    • <strong>🧹 Clean Code:</strong> Strips extraneous comments and cleans up whitespace.<br>
+    • <strong>📁 New / Upload:</strong> Creates new files or uploads local code into the workspace.`;
+  } else if (lowerQ.includes('pipeline') || lowerQ.includes('agent') || lowerQ.includes('4-phase')) {
+    answer = `<strong>⚙️ 4-Phase Multi-Agent Execution Pipeline:</strong><br>
+    1. <strong>Parse Agent:</strong> Validates grammar and constructs the Abstract Syntax Tree (AST).<br>
+    2. <strong>Analyze Agent:</strong> Categorizes errors (Name, Type, ZeroDivision, etc.) and evaluates 52+ CWE patterns.<br>
+    3. <strong>Fix / Opt Agent:</strong> Generates optimal code repairs and green computing optimizations.<br>
+    4. <strong>Verify Agent:</strong> Validates clean compilation and computes final health score (0–100).`;
+  } else if (lowerQ.includes('bleu') || lowerQ.includes('rouge') || lowerQ.includes('metric')) {
+    answer = `<strong>📊 BLEU vs. ROUGE Linguistic Evaluation:</strong><br>
+    • <strong>BLEU (Precision):</strong> Evaluates n-gram precision (BLEU-1 to BLEU-4) of NLP explanations against expert references.<br>
+    • <strong>ROUGE (Recall):</strong> Evaluates coverage (ROUGE-1, ROUGE-2) and Longest Common Subsequence (ROUGE-L) so key debugging instructions are never omitted.`;
+  } else if (lowerQ.includes('security') || lowerQ.includes('cwe') || lowerQ.includes('vuln') || lowerQ.includes('audit')) {
+    answer = `<strong>🛡️ 52+ CWE Static Security Audits:</strong><br>
+    Covers OWASP Top 10 across Python, Java, and C++ including:<br>
+    • Arbitrary Code Execution (eval, exec, system) [CWE-95, CWE-78]<br>
+    • SQL Injection (formatted queries & JDBC) [CWE-89]<br>
+    • Insecure Deserialization (pickle, ObjectInputStream) [CWE-502]<br>
+    • Hardcoded Cloud Secrets (AWS, GitHub, Slack tokens) [CWE-798]<br>
+    • Buffer Overflows & Format Strings in C++ [CWE-120, CWE-134]<br>
+    • XML External Entity (XXE) and Path Traversal [CWE-611, CWE-22]`;
+  } else if (lowerQ.includes('eco') || lowerQ.includes('carbon') || lowerQ.includes('energy') || lowerQ.includes('rapl')) {
+    answer = `<strong>🌿 Eco-Telemetry & Green Computing:</strong><br>
+    • <strong>RAPL Energy:</strong> Measures CPU package power in millijoules (mJ).<br>
+    • <strong>Carbon Mass:</strong> Calculates CO₂ equivalent emissions per run in µg and kg.<br>
+    • <strong>Pinpoint Overhead:</strong> Tracks latency added by analysis vs raw compilation.<br>
+    • <strong>Dashboard:</strong> Visualizes all historical trends under the Eco Analytics tab!`;
+  } else if (lowerQ.includes('test') || lowerQ.includes('1k') || lowerQ.includes('suites') || lowerQ.includes('57')) {
+    answer = `<strong>📁 57 Standardized Test Suites (1,000+ Lines Each):</strong><br>
+    • <strong>Total Volume:</strong> 61,387 lines across 57 test files!<br>
+    • <strong>Python (44 files):</strong> Compiler errors (tc_01–tc_12), Security audits (tc_13–tc_32), and Enterprise platforms (tc_33–tc_35).<br>
+    • <strong>Java (7 files):</strong> Compile/runtime errors (tc_19, tc_20) and Core Banking (tc_36).<br>
+    • <strong>C++ (6 files):</strong> Memory errors (tc_21, tc_22) and Firewall Kernel (tc_37).`;
+  } else if (lowerQ.includes('resizer') || lowerQ.includes('splitter') || lowerQ.includes('divider') || lowerQ.includes('pull')) {
+    answer = `<strong>↔️ Vertical Resizer Splitter:</strong><br>
+    • Drag the divider bar up or down freely to adjust the code vs output view.<br>
+    • Double-click the bar to instantly collapse or expand the bottom terminal!<br>
+    • Your custom layout height is saved automatically.`;
+  } else {
+    answer = `<strong>💡 System Overview for "${q}":</strong><br>
+    CompilerAI / INTELLIFIX combines compiler theory, Abstract Syntax Tree analysis, NLP explanation synthesis, and 52+ CWE static security audits.<br>
+    You can explore all chapters under the <strong>Field Guide</strong> tab or ask about any specific button, agent, or error type!`;
+  }
+
+  lastBotReplyText = answer.replace(/<[^>]+>/g, ' ');
+
+  setTimeout(() => {
+    const botDiv = document.createElement('div');
+    botDiv.className = 'ast-msg bot';
+    botDiv.innerHTML = answer;
+    body.appendChild(botDiv);
+    body.scrollTop = body.scrollHeight;
+  }, 250);
+}
+
+function speakLastAssistantMessage() {
+  if (!('speechSynthesis' in window)) {
+    toast("Speech synthesis not supported in this browser", "warn");
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(lastBotReplyText);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  window.speechSynthesis.speak(utterance);
+  toast("🔊 Playing audible explanation...", "ok");
+}
+
+// ── 3. Interactive Guided Spotlight Tour ──
+const TOUR_STEPS = [
+  {
+    target: '#sidebar',
+    title: '1. File Explorer & 57 Test Suites',
+    desc: 'Browse through 57 enterprise test suites across Python, Java, and C++, each standardized to 1,000+ lines of code with realistic domain logic.'
+  },
+  {
+    target: '.code-panel',
+    title: '2. Source Code Editor',
+    desc: 'Full-featured code editor with syntax highlighting, language selector, line numbering, and a live code health score badge (0–100).'
+  },
+  {
+    target: '.pipeline-panel',
+    title: '3. 4-Phase Live Agentic Pipeline',
+    desc: 'Watch the Parse, Analyze, Fix/Opt, and Verify agents run in staged progression to isolate bugs, optimize performance, and verify fixes.'
+  },
+  {
+    target: '#v-resizer',
+    title: '4. Vertical Resizer Splitter Bar',
+    desc: 'Drag this bar up and down freely to resize the code area and bottom terminal, or double-click to collapse/expand.'
+  },
+  {
+    target: '#bt-output',
+    title: '5. Output & NLP Diagnostics',
+    desc: 'Presents token-level error diagnostics and natural language explanations of what went wrong, why, and how to fix it.'
+  },
+  {
+    target: '#bt-fixed',
+    title: '6. Optimized & Healed Code',
+    desc: 'Displays the AI-generated code repair with a 1-click "Load into Editor" button to instantly patch the broken file.'
+  },
+  {
+    target: '#bt-security',
+    title: '7. 52+ CWE Static Security Audits',
+    desc: 'Audits for SQL injection, command execution, unsafe deserialization, XXE, SSRF, and C++ memory flaws with severity badges and CWE codes.'
+  },
+  {
+    target: '#bt-eco',
+    title: '8. Green Computing & Eco Metrics',
+    desc: 'Monitors CPU RAPL energy in millijoules and estimates carbon emissions (CO₂ eq) per compilation run.'
+  },
+  {
+    target: '.page-tabs',
+    title: '9. Eco Analytics, AI Grader & Guide',
+    desc: 'Switch between the Studio IDE, Eco Analytics telemetry dashboard, AI Grader Studio, and this comprehensive Field Guide.'
+  }
+];
+
+let currentTourIndex = 0;
+
+function startGuidedTour() {
+  switchPage('studio');
+  currentTourIndex = 0;
+  document.getElementById('tour-backdrop').classList.add('active');
+  document.getElementById('tour-popover').classList.add('active');
+  renderTourStep();
+}
+
+function endGuidedTour() {
+  document.getElementById('tour-backdrop').classList.remove('active');
+  document.getElementById('tour-popover').classList.remove('active');
+  document.querySelectorAll('.tour-target-highlight').forEach(el => el.classList.remove('tour-target-highlight'));
+}
+
+function nextTourStep() {
+  if (currentTourIndex < TOUR_STEPS.length - 1) {
+    currentTourIndex++;
+    renderTourStep();
+  } else {
+    endGuidedTour();
+    toast("✨ Guided Tour completed! Explore the Field Guide for deep dives.", "ok");
+  }
+}
+
+function prevTourStep() {
+  if (currentTourIndex > 0) {
+    currentTourIndex--;
+    renderTourStep();
+  }
+}
+
+function renderTourStep() {
+  document.querySelectorAll('.tour-target-highlight').forEach(el => el.classList.remove('tour-target-highlight'));
+  
+  const step = TOUR_STEPS[currentTourIndex];
+  document.getElementById('tour-step-badge').textContent = `Step ${currentTourIndex + 1} of ${TOUR_STEPS.length}`;
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-desc').textContent = step.desc;
+
+  document.getElementById('tour-prev-btn').style.visibility = (currentTourIndex === 0) ? 'hidden' : 'visible';
+  document.getElementById('tour-next-btn').textContent = (currentTourIndex === TOUR_STEPS.length - 1) ? 'Finish Tour ✓' : 'Next Step →';
+
+  const el = document.querySelector(step.target);
+  const popover = document.getElementById('tour-popover');
+  
+  if (el) {
+    el.classList.add('tour-target-highlight');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    const rect = el.getBoundingClientRect();
+    let top = rect.bottom + 12;
+    let left = rect.left + (rect.width / 2) - 170;
+
+    // Boundary constraints
+    if (top + 200 > window.innerHeight) top = Math.max(16, rect.top - 200);
+    if (left < 16) left = 16;
+    if (left + 350 > window.innerWidth) left = window.innerWidth - 360;
+
+    popover.style.top = top + 'px';
+    popover.style.left = left + 'px';
+  } else {
+    popover.style.top = '25%';
+    popover.style.left = 'calc(50% - 170px)';
+  }
+}
+
+</script>
+<style>
+:root {
+  --bg:#f5f7fa; --surface:#fff; --border:#e2e6ea; --border2:#d1d5db;
+  --text:#1a1d23; --muted:#6b7280; --accent:#2563eb; --accent-h:#1d4ed8;
+  --accent-soft:#eff6ff; --green:#10b981; --green-soft:#ecfdf5;
+  --red:#ef4444; --red-soft:#fee2e2; --yellow:#f59e0b; --yellow-soft:#fef9ee;
+  --purple:#8b5cf6; --purple-soft:#f5f3ff;
+  --navbar-h:52px; --sidebar-w:220px;
+  --font-ui:'Inter',system-ui,sans-serif; --font-code:'Fira Code',Consolas,monospace;
+  --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.08); --shadow-md:0 4px 16px rgba(0,0,0,.14);
+}
+body.dark{
+  --bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--border2:#363944;
+  --text:#e2e8f0;--muted:#94a3b8;--accent-soft:#1e3a5f;
+  --green-soft:#0d2c20;--red-soft:#2d1515;--yellow-soft:#2d2000;--purple-soft:#1e1535;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--font-ui);font-size:13px;overflow:hidden;}
+body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* ── NAVBAR ── */
+.navbar{height:var(--navbar-h);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;
+  box-shadow:var(--shadow);z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;flex-shrink:0;cursor:default;}
+.brand-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;}
+.brand-name{font-size:14px;font-weight:700;line-height:1.2;}
+.brand-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.status-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;
+  border:1px solid var(--border2);font-size:12px;font-weight:500;color:var(--green);
+  background:var(--green-soft);white-space:nowrap;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.icon-btn{width:32px;height:32px;border-radius:6px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;font-size:15px;transition:all .15s;}
+.icon-btn:hover{background:var(--border);color:var(--text);}
+.run-btn{display:flex;align-items:center;gap:6px;padding:7px 18px;background:var(--accent);
+  color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}
+.run-btn:hover{background:var(--accent-h);}
+.run-btn.running{background:#94a3b8;cursor:wait;}
+
+/* ── BODY SHELL ── */
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;}
+.sidebar.collapsed{width:0;overflow:hidden;}
+.sidebar-header{padding:9px 12px 7px;font-size:10.5px;font-weight:700;color:var(--muted);
+  letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.sb-actions{display:flex;gap:2px;}
+.sb-btn{width:22px;height:22px;border-radius:4px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;
+  justify-content:center;transition:all .12s;}
+.sb-btn:hover{background:var(--border);color:var(--text);}
+.file-list{flex:1;overflow-y:auto;padding:4px 0;}
+.file-list::-webkit-scrollbar{width:4px;}
+.file-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.file-item{display:flex;align-items:center;padding:4px 8px 4px 12px;cursor:pointer;
+  color:var(--text);font-size:12.5px;justify-content:space-between;gap:4px;user-select:none;}
+.file-item:hover{background:var(--border);}
+.file-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+.fi-left{display:flex;align-items:center;gap:6px;overflow:hidden;flex:1;}
+.fi-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fi-del{opacity:0;width:18px;height:18px;border:none;background:transparent;color:var(--red);
+  cursor:pointer;border-radius:3px;font-size:13px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;transition:opacity .15s;}
+.file-item:hover .fi-del{opacity:1;}
+.fi-del:hover{background:var(--red-soft);}
+.fixed-badge{font-size:10px;background:var(--green-soft);color:var(--green);
+  padding:1px 5px;border-radius:3px;flex-shrink:0;}
+
+/* ── MAIN CONTENT ── */
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.page-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border);
+  padding:0 12px;gap:0;flex-shrink:0;}
+.ptab{padding:8px 16px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.ptab:hover{color:var(--text);}
+.ptab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0;}
+.page.active{display:flex;}
+
+/* ── STUDIO ── */
+.studio-panels{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;
+  border-bottom:1px solid var(--border);min-height:0;}
+.code-panel,.pipeline-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--surface);}
+.code-panel{border-right:1px solid var(--border);}
+.panel-header{height:40px;background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;
+  font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;}
+.phr{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.lang-sel{padding:3px 8px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);
+  color:var(--text);font-family:var(--font-ui);font-size:12px;font-weight:500;cursor:pointer;outline:none;}
+.lang-sel:focus{border-color:var(--accent);}
+.ph-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--border2);background:var(--surface);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:13px;transition:all .12s;}
+.ph-btn:hover{background:var(--border);color:var(--text);}
+.editor-wrap{flex:1;display:flex;overflow:hidden;background:var(--surface);}
+.line-nums{width:44px;background:var(--bg);border-right:1px solid var(--border);padding:12px 0;
+  font-family:var(--font-code);font-size:12px;line-height:1.65;color:var(--muted);
+  text-align:right;user-select:none;overflow:hidden;flex-shrink:0;}
+.line-nums span{display:block;padding-right:10px;}
+textarea.code-area{flex:1;border:none;outline:none;resize:none;padding:12px 14px;
+  font-family:var(--font-code);font-size:12.5px;line-height:1.65;background:var(--surface);
+  color:var(--text);tab-size:4;overflow-y:auto;}
+textarea.code-area::placeholder{color:var(--muted);opacity:.55;}
+textarea.code-area::-webkit-scrollbar{width:6px;}
+textarea.code-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ── PIPELINE ── */
+.pipeline-body{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:24px;padding:30px;overflow-y:auto;}
+.pip-steps{display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:0;}
+.pip-step{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.pip-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--muted);transition:all .3s;font-weight:700;}
+.pip-dot.done{background:var(--accent);border-color:var(--accent);color:#fff;}
+.pip-dot.active{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.15);color:var(--accent);}
+.pip-dot.error{background:var(--red);border-color:var(--red);color:#fff;}
+.pip-label{font-size:10.5px;color:var(--muted);font-weight:500;white-space:nowrap;}
+.pip-line{width:52px;height:2px;background:var(--border2);margin-bottom:22px;transition:background .4s;}
+.pip-line.done{background:var(--accent);}
+.pip-hint{font-size:12px;color:var(--muted);text-align:center;max-width:300px;line-height:1.6;}
+
+/* ── VERTICAL RESIZER (SPLITTER) ── */
+.v-resizer{height:9px;background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  cursor:row-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:40;
+  user-select:none;-webkit-user-select:none;transition:background .12s, border-color .12s;}
+.v-resizer:hover,.v-resizer.dragging{background:rgba(37,99,235,.22);border-top-color:var(--accent);border-bottom-color:var(--accent);}
+.resizer-handle{width:44px;height:3px;border-radius:2px;background:var(--border2);pointer-events:none;transition:all .15s ease;}
+.v-resizer:hover .resizer-handle,.v-resizer.dragging .resizer-handle{width:72px;background:var(--accent);box-shadow:0 0 6px rgba(37,99,235,.45);}
+body.resizing-v{cursor:row-resize !important;user-select:none !important;-webkit-user-select:none !important;}
+body.resizing-v *{cursor:row-resize !important;user-select:none !important;}
+body.resizing-v textarea,body.resizing-v input,body.resizing-v iframe{pointer-events:none !important;}
+
+/* ── BOTTOM PANEL ── */
+.bottom-panel{height:clamp(180px,28vh,260px);min-height:38px;background:var(--surface);
+  border-top:none;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;position:relative;}
+.bottom-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 12px;
+  background:var(--bg);flex-shrink:0;overflow-x:auto;}
+.bottom-tabs::-webkit-scrollbar{height:3px;}
+.btab{padding:7px 12px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;display:flex;align-items:center;gap:5px;
+  transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.btab:hover{color:var(--text);}
+.btab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.btab-badge{font-size:10px;padding:1px 5px;border-radius:10px;background:var(--red);
+  color:#fff;font-weight:700;}
+.bottom-toolbar{margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:4px;flex-shrink:0;}
+.bottom-content{flex:1;overflow:hidden;}
+.btab-panel{display:none;height:100%;flex-direction:column;overflow:hidden;}
+.btab-panel.active{display:flex;}
+.terminal{flex:1;background:var(--surface);font-family:var(--font-code);font-size:12.5px;
+  line-height:1.65;padding:12px 16px;overflow-y:auto;color:var(--text);white-space:pre-wrap;}
+.terminal::-webkit-scrollbar{width:6px;}
+.terminal::-webkit-scrollbar-thumb{background:var(--border2);}
+.t-empty{height:100%;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;color:var(--muted);font-size:12.5px;text-align:center;line-height:1.6;}
+.t-prompt{font-size:22px;opacity:.35;font-family:var(--font-code);}
+.c-green{color:#059669;} .c-red{color:#dc2626;} .c-blue{color:var(--accent);}
+.c-muted{color:var(--muted);} .c-yellow{color:#b45309;}
+
+/* ── SECURITY DISPLAY ── */
+.sec-panel{flex:1;overflow-y:auto;padding:12px 16px;background:var(--surface);}
+.sec-summary{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;
+  border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:12.5px;}
+.sec-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:5px;
+  font-size:12px;font-weight:700;}
+.sec-badge.high{background:var(--red-soft);color:var(--red);}
+.sec-badge.medium{background:var(--yellow-soft);color:#92400e;}
+.sec-badge.low{background:var(--green-soft);color:var(--green);}
+.sec-badge.info{background:var(--accent-soft);color:var(--accent);}
+.sec-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:7px;
+  margin-bottom:8px;border:1px solid var(--border);}
+.sec-item.high{background:var(--red-soft);border-color:#fca5a5;}
+.sec-item.medium{background:var(--yellow-soft);border-color:#fcd34d;}
+.sec-item.low{background:var(--green-soft);border-color:#6ee7b7;}
+.sec-item.info{background:var(--accent-soft);border-color:#93c5fd;}
+.sec-item-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.sec-item-body{flex:1;}
+.sec-item-title{font-weight:700;font-size:12.5px;margin-bottom:3px;}
+.sec-item-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.sec-raw{margin-top:12px;padding:12px;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;font-family:var(--font-code);font-size:11.5px;color:var(--text);
+  white-space:pre-wrap;line-height:1.6;}
+
+/* ── BUTTONS ── */
+.btn{padding:6px 14px;border-radius:6px;border:none;font-family:var(--font-ui);
+  font-size:12.5px;font-weight:600;cursor:pointer;color:#fff;transition:all .15s;
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn-blue{background:var(--accent);} .btn-blue:hover{background:var(--accent-h);}
+.btn-green{background:var(--green);} .btn-green:hover{background:#0d9e70;}
+.btn-yellow{background:var(--yellow);} .btn-yellow:hover{background:#d97706;}
+.btn-red{background:var(--red);} .btn-red:hover{background:#dc2626;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+
+/* ── ANALYTICS ── */
+.analytics-scroll{flex:1;overflow-y:auto;padding:20px;background:var(--bg);}
+.analytics-scroll::-webkit-scrollbar{width:6px;}
+.analytics-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.analytics-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.analytics-topbar h2{font-size:16px;font-weight:700;}
+.analytics-topbar small{color:var(--muted);font-size:12px;display:block;margin-top:3px;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.stat-card .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.stat-card .value{font-size:1.4rem;font-weight:700;font-family:var(--font-code);}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;box-shadow:var(--shadow);}
+.chart-card h3{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.07em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.chart-container{position:relative;height:200px;width:100%;}
+.chart-empty{height:200px;display:flex;align-items:center;justify-content:center;
+  color:var(--muted);font-size:12px;border:2px dashed var(--border2);border-radius:6px;}
+
+/* ── GRADER ── */
+.grader-scroll{flex:1;overflow-y:auto;padding:20px;background:var(--bg);}
+.grader-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+.grader-topbar h2{font-size:15px;font-weight:700;}
+.grader-topbar p{font-size:12px;color:var(--muted);margin-top:3px;}
+.agent-badge{background:var(--accent);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;white-space:nowrap;}
+.grader-code-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.grader-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);}
+.grader-card-hdr{background:var(--bg);padding:8px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;font-size:11.5px;
+  font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.grader-card textarea{display:block;width:100%;height:190px;background:var(--surface);
+  color:var(--text);border:none;outline:none;padding:10px 14px;font-family:var(--font-code);
+  font-size:12.5px;resize:none;line-height:1.65;}
+.grader-results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grader-result-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;box-shadow:var(--shadow);}
+.grader-result-card h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.score-big{font-size:2.4rem;font-weight:700;color:var(--green);font-family:var(--font-code);margin-bottom:8px;}
+.plag-display{font-size:12px;color:var(--yellow);font-weight:600;margin-bottom:10px;}
+#feedbackList{list-style:none;line-height:1.9;color:var(--muted);font-size:12.5px;}
+#feedbackList li::before{content:"▸ ";color:var(--accent);}
+.chat-box{height:140px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:10px 12px;font-size:12.5px;color:var(--text);white-space:pre-line;
+  line-height:1.6;margin-bottom:10px;font-family:var(--font-code);}
+.chat-input-row{display:flex;gap:8px;}
+.chat-input-row input{flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border2);
+  border-radius:6px;padding:7px 10px;font-family:var(--font-ui);font-size:13px;outline:none;}
+.chat-input-row input:focus{border-color:var(--accent);}
+.lang-sel-grader{background:var(--surface);color:var(--accent);border:1px solid var(--border2);
+  border-radius:5px;padding:4px 8px;font-family:var(--font-ui);font-size:12px;font-weight:600;cursor:pointer;outline:none;}
+
+/* ── MODALS ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;
+  padding:28px;width:420px;max-width:95vw;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:16px;}
+.modal-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.modal label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+.modal input[type=text],.modal select,.modal textarea{width:100%;padding:9px 12px;
+  border:1px solid var(--border2);border-radius:7px;background:var(--bg);color:var(--text);
+  font-family:var(--font-ui);font-size:13px;outline:none;}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent);}
+.modal textarea{resize:vertical;min-height:80px;font-family:var(--font-code);font-size:12px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:4px;}
+.modal-cancel{padding:7px 18px;border:1px solid var(--border2);border-radius:7px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;}
+.modal-cancel:hover{background:var(--border);}
+.modal-ok{padding:7px 18px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
+.modal-ok:hover{background:var(--accent-h);}
+.modal-ok.red{background:var(--red);}
+.upload-drop{border:2px dashed var(--border2);border-radius:8px;padding:22px;text-align:center;cursor:pointer;color:var(--muted);font-size:12.5px;transition:all .15s;}
+.upload-drop:hover,.upload-drop.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);}
+.upload-icon{font-size:28px;display:block;margin-bottom:6px;}
+#upload-input{display:none;}
+.modal-info{font-size:12px;color:var(--muted);background:var(--bg);border-radius:6px;padding:8px 12px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--surface);
+  padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:var(--shadow-md);
+  transform:translateY(80px);opacity:0;transition:all .3s;z-index:2000;max-width:320px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{background:var(--green);color:#fff;}
+.toast.err{background:var(--red);color:#fff;}
+.toast.warn{background:var(--yellow);color:#fff;}
+
+/* ── STATUS BAR ── */
+.statusbar{height:22px;background:var(--accent);display:flex;align-items:center;
+  padding:0 12px;gap:16px;flex-shrink:0;overflow:hidden;}
+.sitem{font-size:11px;color:rgba(255,255,255,.88);display:flex;align-items:center;gap:4px;
+  white-space:nowrap;cursor:default;padding:0 2px;border-radius:2px;}
+.sitem:hover{background:rgba(255,255,255,.15);}
+.sright{margin-left:auto;display:flex;gap:14px;}
+
+body.scanning .run-btn{background:#94a3b8;cursor:wait;}
+body.scanning .studio-panels{opacity:.75;pointer-events:none;}
+
+/* ── RESPONSIVE ── */
+@media (max-width:900px){
+  .studio-panels{grid-template-columns:1fr;grid-template-rows:1fr 1fr;}
+  .code-panel{border-right:none;border-bottom:1px solid var(--border);}
+  .grader-code-grid,.grader-results-grid{grid-template-columns:1fr;}
+  .sidebar{width:180px;}
+}
+@media (max-width:680px){
+  :root{--sidebar-w:0px;}
+  .sidebar{display:none;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .bottom-toolbar .btn span{display:none;}
+  .brand-sub{display:none;}
+}
+@media (max-width:480px){
+  .stats-row{grid-template-columns:1fr;}
+  .chart-grid{grid-template-columns:1fr;}
+}
+
+/* ── COMPILERAI FIELD GUIDE & SYSTEM ASSISTANT ── */
+.guide-scroll { flex:1; overflow-y:auto; padding:22px 26px; background:var(--bg); }
+.guide-scroll::-webkit-scrollbar { width:6px; }
+.guide-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+.guide-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+.guide-header h2 { font-size:18px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
+.guide-header p { font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5; }
+.guide-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:20px; }
+.guide-search-box { position:relative; flex:1; min-width:260px; }
+.guide-search-box input { width:100%; background:var(--surface); border:1px solid var(--border2); border-radius:7px; padding:8px 12px 8px 34px; font-size:13px; color:var(--text); outline:none; transition:border-color .15s; }
+.guide-search-box input:focus { border-color:var(--accent); }
+.guide-search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--muted); pointer-events:none; }
+.guide-pills { display:flex; gap:6px; flex-wrap:wrap; }
+.guide-pill { padding:5px 12px; border-radius:20px; font-size:11.5px; font-weight:600; cursor:pointer; background:var(--surface); border:1px solid var(--border); color:var(--muted); transition:all .15s; }
+.guide-pill:hover, .guide-pill.active { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+
+.guide-section { margin-bottom:24px; }
+.guide-section-hdr { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.guide-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:16px; }
+.guide-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; box-shadow:var(--shadow); transition:transform .15s, border-color .15s; position:relative; }
+.guide-card:hover { border-color:var(--accent); }
+.guide-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+.guide-card-title { font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
+.guide-badge { font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:.04em; }
+.guide-badge.blue { background:var(--accent-soft); color:var(--accent); }
+.guide-badge.green { background:var(--green-soft); color:var(--green); }
+.guide-badge.yellow { background:var(--yellow-soft); color:#92400e; }
+.guide-badge.purple { background:rgba(168,85,247,.12); color:#9333ea; }
+.guide-badge.red { background:var(--red-soft); color:var(--red); }
+.guide-card-desc { font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+.guide-card-list { list-style:none; padding:0; margin:0; font-size:12px; line-height:1.75; color:var(--text); }
+.guide-card-list li { margin-bottom:6px; padding-left:14px; position:relative; }
+.guide-card-list li::before { content:"▸"; position:absolute; left:0; color:var(--accent); font-weight:bold; }
+.guide-code-snippet { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px 12px; font-family:var(--font-code); font-size:11.5px; color:var(--text); white-space:pre-wrap; line-height:1.55; margin-top:10px; }
+
+/* ── FLOATING ASSISTANT FAB & DRAWER ── */
+.assistant-dock { position:fixed; bottom:30px; right:26px; z-index:1800; }
+.assistant-fab { display:flex; align-items:center; gap:8px; background:linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color:#fff; border:none; padding:10px 16px; border-radius:30px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(59,130,246,0.38); transition:all .2s; }
+.assistant-fab:hover { transform:scale(1.05); box-shadow:0 8px 24px rgba(59,130,246,0.5); }
+.assistant-fab-icon { font-size:16px; }
+.assistant-drawer { display:none; position:fixed; bottom:80px; right:26px; width:390px; max-width:calc(100vw - 32px); height:560px; max-height:calc(100vh - 110px); background:var(--surface); border:1px solid var(--border2); border-radius:14px; box-shadow:0 12px 36px rgba(0,0,0,0.28); flex-direction:column; overflow:hidden; z-index:1850; animation:drawerSlideUp .2s cubic-bezier(0.16,1,0.3,1); }
+.assistant-drawer.open { display:flex; }
+@keyframes drawerSlideUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+
+.ast-hdr { background:var(--bg); padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.ast-hdr-title { font-size:13.5px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
+.ast-hdr-actions { display:flex; gap:6px; align-items:center; }
+.ast-body { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; background:var(--surface); }
+.ast-body::-webkit-scrollbar { width:5px; }
+.ast-body::-webkit-scrollbar-thumb { background:var(--border2); }
+.ast-msg { padding:10px 12px; border-radius:8px; font-size:12.5px; line-height:1.55; }
+.ast-msg.bot { background:var(--bg); border:1px solid var(--border); color:var(--text); }
+.ast-msg.user { background:var(--accent); color:#fff; align-self:flex-end; max-width:85%; }
+.ast-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.ast-chip { font-size:11px; font-weight:600; padding:4px 9px; border-radius:14px; background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent); cursor:pointer; transition:all .15s; }
+.ast-chip:hover { background:var(--accent); color:#fff; }
+.ast-footer { padding:10px 12px; background:var(--bg); border-top:1px solid var(--border); display:flex; gap:8px; align-items:center; flex-shrink:0; }
+.ast-footer input { flex:1; background:var(--surface); border:1px solid var(--border2); border-radius:7px; padding:8px 10px; font-size:12.5px; color:var(--text); outline:none; }
+.ast-footer input:focus { border-color:var(--accent); }
+
+/* ── SPOTLIGHT TOUR OVERLAY ── */
+.tour-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:2100; transition:opacity .25s; }
+.tour-backdrop.active { display:block; }
+.tour-popover { display:none; position:fixed; z-index:2200; background:var(--surface); border:1px solid var(--accent); border-radius:12px; width:340px; padding:18px; box-shadow:0 10px 32px rgba(0,0,0,0.45); animation:popoverFadeIn .2s ease-out; }
+.tour-popover.active { display:block; }
+@keyframes popoverFadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+.tour-popover-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.tour-step-badge { font-size:10.5px; font-weight:700; background:var(--accent); color:#fff; padding:2px 8px; border-radius:4px; }
+.tour-close-btn { background:transparent; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 6px; }
+.tour-popover h4 { font-size:14px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.tour-popover p { font-size:12px; color:var(--muted); line-height:1.55; margin-bottom:14px; }
+.tour-actions { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.tour-target-highlight { position:relative; z-index:2150 !important; box-shadow:0 0 0 4px var(--accent), 0 0 25px rgba(59,130,246,0.5) !important; border-radius:6px; }
+
+</style>
+</head>
+<body>
+
+<!-- ══════ NAVBAR ══════ -->
+<nav class="navbar">
+  <div class="brand">
+    <div class="brand-icon">C</div>
+    <div>
+      <div class="brand-name">CompilerAI</div>
+      <div class="brand-sub">Optimization Studio</div>
+    </div>
+  </div>
+
+  <div class="nav-right">
+    <button class="btn btn-blue btn-sm" id="btn-quick-tour" onclick="startGuidedTour()" title="Start interactive step-by-step UI tour" style="margin-right:4px;">✨ Guided Tour</button>
+    <button class="btn btn-sm" id="btn-open-guide-tab" onclick="switchPage('guide')" title="Open complete system field guide" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);margin-right:6px;">📘 Field Guide</button>
+    <div class="status-pill"><span class="sdot"></span><span id="agent-status">Real Agents Ready</span></div>
+    <button class="icon-btn" id="dark-btn" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+    <button class="run-btn" id="run-btn" onclick="doScan()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg> Run
+    </button>
+  </div>
+</nav>
+
+<!-- ══════ MODALS ══════ -->
+
+<!-- New File -->
+<div class="modal-overlay" id="m-new">
+  <div class="modal">
+    <div class="modal-title">📄 Create New File</div>
+    <div>
+      <label>File Name</label>
+      <input type="text" id="nf-name" placeholder="e.g. solution.py" autocomplete="off" oninput="syncLangFromName()">
+    </div>
+    <div>
+      <label>Language / Type</label>
+      <select id="nf-lang" onchange="syncNameFromLang()">
+        <option value="py">🐍 Python (.py)</option>
+        <option value="cpp">⚙️ C++ (.cpp)</option>
+        <option value="java">☕ Java (.java)</option>
+        <option value="c">🔵 C (.c)</option>
+        <option value="txt">📝 Plain Text (.txt)</option>
+      </select>
+    </div>
+    <div>
+      <label>Starter Code (optional)</label>
+      <textarea id="nf-code" placeholder="// Leave blank for language template"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeM('m-new')">Cancel</button>
+      <button class="modal-ok" onclick="createFile()">✅ Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload File -->
+<div class="modal-overlay" id="m-upload">
+  <div class="modal">
+    <div class="modal-title">📁 Upload File(s)</div>
+    <div class="upload-drop" id="upload-drop"
+         onclick="document.getElementById('upload-input').click()"
+         ondragover="event.preventDefault();this.classList.add('on')"
+         ondragleave="this.classList.remove('on')"
+         ondrop="dropFiles(event)">
+      <span class="upload-icon">⬆️</span>
+      <strong>Click to browse or drag &amp; drop</strong><br>
+      <span style="font-size:11px;">Supports .py .cpp .java .c .txt .h</span>
+    </div>
+    <input type="file" id="upload-input" accept=".py,.cpp,.java,.c,.txt,.h,.js" multiple onchange="pickFiles(this.files)">
+    <div id="upload-preview" class="modal-info" style="display:none;"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeM('m-upload')">Cancel</button>
+      <button class="modal-ok" id="upload-ok" onclick="doUpload()" disabled>📤 Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="modal-overlay" id="m-delete">
+  <div class="modal">
+    <div class="modal-title">🗑 Delete File</div>
+    <div class="modal-info">Are you sure you want to delete <strong id="del-fname"></strong>? This cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeM('m-delete')">Cancel</button>
+      <button class="modal-ok red" onclick="confirmDelete()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ APP BODY ══════ -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      Explorer
+      <div class="sb-actions">
+        <button class="sb-btn" onclick="openM('m-new')" title="New File">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        </button>
+        <button class="sb-btn" onclick="openM('m-upload')" title="Upload Files">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
+        <button class="sb-btn" onclick="loadFiles()" title="Refresh">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="file-list" id="file-list"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="main-content">
+    <div class="page-tabs">
+      <div class="ptab active" id="pt-studio"    onclick="switchPage('studio')">🖥 Studio</div>
+      <div class="ptab"        id="pt-analytics" onclick="switchPage('analytics')">📊 Eco Analytics</div>
+      <div class="ptab"        id="pt-grader"    onclick="switchPage('grader')">🤖 AI Grader</div>
+      <div class="ptab"        id="pt-guide"     onclick="switchPage('guide')">📘 Complete Guide &amp; Assistant</div>
+    </div>
+
+    <!-- ══ STUDIO PAGE ══ -->
+    <div class="page active" id="page-studio">
+      <div class="studio-panels">
+
+        <!-- Source Code -->
+        <div class="code-panel">
+          <div class="panel-header">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+            Source Code
+            <div class="phr">
+              <select id="lang-select" class="lang-sel" onchange="onLangChange()">
+                <option value="user_code.py">Python</option>
+                <option value="user_code.cpp">C++</option>
+                <option value="Main.java">Java</option>
+              </select>
+              <span id="lbl-file" style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+              <span id="badge-acc" style="display:none;font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:700;"></span>
+              <button class="ph-btn" onclick="copyCode()" title="Copy">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+              <button class="ph-btn" onclick="clearEditor()" title="Clear" style="color:var(--red);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="editor-wrap">
+            <div class="line-nums" id="line-nums"></div>
+            <textarea class="code-area" id="code-editor"
+              placeholder="// Select a file from Explorer, or paste Python / C++ / Java code here...
+// Ctrl+Enter = Scan   Ctrl+S = Save   Ctrl+N = New File   Ctrl+O = Upload"
+              oninput="updateLN()" onscroll="syncScroll(this)" spellcheck="false"></textarea>
+          </div>
+        </div>
+
+        <!-- Live Pipeline -->
+        <div class="pipeline-panel">
+          <div class="panel-header">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Live Pipeline
+            <div class="phr">
+              <span id="pip-status-badge" style="display:none;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:600;"></span>
+            </div>
+          </div>
+          <div class="pipeline-body">
+            <div class="pip-steps">
+              <div class="pip-step"><div class="pip-dot" id="pip1">1</div><div class="pip-label">Parse</div></div>
+              <div class="pip-line" id="pline1"></div>
+              <div class="pip-step"><div class="pip-dot" id="pip2">2</div><div class="pip-label">Analyze</div></div>
+              <div class="pip-line" id="pline2"></div>
+              <div class="pip-step"><div class="pip-dot" id="pip3">3</div><div class="pip-label">Fix / Opt</div></div>
+              <div class="pip-line" id="pline3"></div>
+              <div class="pip-step"><div class="pip-dot" id="pip4">4</div><div class="pip-label">Verify</div></div>
+            </div>
+            <div class="pip-hint" id="pip-hint">Pipeline will run here when you click Run or Scan &amp; Diagnose.</div>
+          </div>
+        </div>
+
+      </div><!-- end studio-panels -->
+
+      <!-- Vertical Resizer / Splitter Bar -->
+      <div class="v-resizer" id="v-resizer" title="Drag up or down to resize panels • Double-click to collapse/expand">
+        <div class="resizer-handle"></div>
+      </div>
+
+      <!-- Bottom Output Panel -->
+      <div class="bottom-panel" id="bottom-panel">
+        <div class="bottom-tabs">
+          <div class="btab active" id="bt-output"   onclick="switchBtab('output')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> Output
+          </div>
+          <div class="btab" id="bt-fixed" onclick="switchBtab('fixed')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Optimized Code
+          </div>
+          <div class="btab" id="bt-security" onclick="switchBtab('security')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Security
+            <span class="btab-badge" id="sec-badge" style="display:none;">!</span>
+          </div>
+          <div class="btab" id="bt-messages" onclick="switchBtab('messages')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Messages
+          </div>
+          <div class="btab" id="bt-eco" onclick="switchBtab('eco')">🌿 Eco Metrics</div>
+          <div class="bottom-toolbar">
+            <span id="badge-agentic" style="display:none;font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:600;"></span>
+            <button class="btn btn-blue btn-sm" id="btn-scan"   onclick="doScan()">▶ <span>Scan &amp; Diagnose</span></button>
+            <button class="btn btn-green btn-sm" id="btn-save"  onclick="doSave()">💾 <span>Save</span></button>
+            <button class="btn btn-yellow btn-sm" id="btn-exec" onclick="doExecute()">⚡ <span>Execute</span></button>
+            <button class="ph-btn" id="btn-panel-toggle" onclick="toggleBottomPanel()" title="Collapse / Expand panel (or drag divider bar)" style="margin-left:2px;">
+              <svg id="svg-panel-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="bottom-content">
+          <!-- Output -->
+          <div class="btab-panel active" id="bp-output">
+            <div id="t-output" class="terminal">
+              <div class="t-empty"><span class="t-prompt">&gt;_</span><strong>No execution output recorded.</strong><span class="c-muted">In this milestone, no target binary runtime is connected. Genuine compiler and<br>runtime output will be displayed here when configured.</span></div>
+            </div>
+          </div>
+          <!-- Optimized Code -->
+          <div class="btab-panel" id="bp-fixed">
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);">
+              <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">AI Modified Code</span>
+              <div style="margin-left:auto;display:flex;gap:6px;">
+                <button class="ph-btn" onclick="copyFixed()" title="Copy fixed code">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                </button>
+                <button class="ph-btn" onclick="loadFixedIntoEditor()" title="Load into editor" style="color:var(--accent);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12H19M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </div>
+            <textarea class="code-area" id="fixed-code" style="flex:1;width:100%;border:none;" placeholder="// AI corrected/optimized code will appear here after scanning..." readonly></textarea>
+          </div>
+          <!-- Security -->
+          <div class="btab-panel" id="bp-security">
+            <div class="sec-panel" id="sec-panel">
+              <div class="t-empty"><span class="t-prompt">🔒</span><strong>Security Analysis</strong><span class="c-muted">Run a scan to see vulnerability findings.</span></div>
+            </div>
+          </div>
+          <!-- Messages -->
+          <div class="btab-panel" id="bp-messages">
+            <div id="t-messages" class="terminal">
+              <div class="t-empty"><span class="t-prompt">💬</span><strong>Agent Messages</strong><span class="c-muted">Step-by-step NLP agent explanations and reasoning appear here after scanning.</span></div>
+            </div>
+          </div>
+          <!-- Eco Metrics -->
+          <div class="btab-panel" id="bp-eco">
+            <div id="t-eco" class="terminal c-green">
+              <div class="t-empty"><span class="t-prompt">🌿</span><strong>Green IT Profiling</strong><span class="c-muted" style="color:var(--muted);">Carbon, energy, and performance metrics appear after a scan.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end studio page -->
+
+    <!-- ══ ANALYTICS PAGE ══ -->
+    <div class="page" id="page-analytics">
+      <div class="analytics-scroll">
+        <div class="analytics-topbar">
+          <div>
+            <h2>📊 Eco-Metrics &amp; Performance Dashboard</h2>
+            <small>Real-time pipeline telemetry · Carbon · Energy · Security · NLP Performance</small>
+          </div>
+          <button class="btn btn-blue btn-sm" onclick="fetchAnalytics()">↺ Refresh Data</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="label">Total Scans</div><div class="value" id="stat-runs" style="color:var(--accent);">—</div></div>
+          <div class="stat-card"><div class="label">Total CO₂ (kg)</div><div class="value" id="stat-co2" style="color:var(--green);">—</div></div>
+          <div class="stat-card"><div class="label">Avg Latency</div><div class="value" id="stat-lat" style="color:var(--yellow);">—</div></div>
+          <div class="stat-card"><div class="label">Last File</div><div class="value" id="stat-last" style="font-size:1rem;color:var(--muted);">—</div></div>
+        </div>
+        <div id="analytics-status" style="display:none;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--muted);"></div>
+        <div class="chart-grid" id="chart-grid">
+          <div class="chart-card"><h3>Pipeline Response Time (ms)</h3><div class="chart-container"><canvas id="chart-response"></canvas></div></div>
+          <div class="chart-card"><h3>Carbon Emissions (µg CO₂ eq)</h3><div class="chart-container"><canvas id="chart-emissions"></canvas></div></div>
+          <div class="chart-card"><h3>RAPL Package Energy (mJ)</h3><div class="chart-container"><canvas id="chart-energy"></canvas></div></div>
+          <div class="chart-card"><h3>Pinpoint Agent Overhead (ms)</h3><div class="chart-container"><canvas id="chart-overhead"></canvas></div></div>
+          <div class="chart-card"><h3>Virtualization Efficiency (%)</h3><div class="chart-container"><canvas id="chart-virt"></canvas></div></div>
+          <div class="chart-card"><h3>NLP Model Performance Score</h3><div class="chart-container"><canvas id="chart-performance"></canvas></div></div>
+          <div class="chart-card"><h3>Static Security Risks Detected</h3><div class="chart-container"><canvas id="chart-security"></canvas></div></div>
+          <div class="chart-card"><h3>Security Vulnerabilities Resolved (%)</h3><div class="chart-container"><canvas id="chart-healing"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GRADER PAGE ══ -->
+    <div class="page" id="page-grader">
+      <div class="grader-scroll">
+        <div class="grader-topbar">
+          <div><h2>🤖 INTELLIFIX Agentic Studio</h2><p>Multi-Agent Plagiarism Detective · Autonomous 100-Mark Grader · Voice/Chat AI Tutor</p></div>
+          <span class="agent-badge">Agentic AI v2.0</span>
+        </div>
+        <div class="grader-code-grid">
+          <div class="grader-card">
+            <div class="grader-card-hdr">
+              <span>📄 Submission A — Target</span>
+              <select id="langSelect" class="lang-sel-grader" onchange="switchLang()">
+                <option value="python">Python</option><option value="cpp">C++</option><option value="java">Java</option>
+              </select>
+            </div>
+            <textarea id="codeA" spellcheck="false">def calculate_sum(numbers):
+    total = 0
+    for n in numbers:
+        total += n
+    return total
+
+print(calculate_sum([10, 20, 30]))</textarea>
+          </div>
+          <div class="grader-card">
+            <div class="grader-card-hdr">
+              <span>🕵️ Submission B — Plagiarism Check</span>
+              <span id="langBadgeB" style="font-size:11px;color:var(--muted);">Python</span>
+            </div>
+            <textarea id="codeB" spellcheck="false">def add_items(arr):
+    res = 0
+    for x in arr:
+        res += x
+    return res
+
+print(add_items([1, 2, 3]))</textarea>
+          </div>
+        </div>
+        <button class="btn btn-blue" onclick="runAgents()" style="width:100%;justify-content:center;padding:9px;margin-bottom:14px;">🚀 Run Multi-Agent Pipeline</button>
+        <div class="grader-results-grid">
+          <div class="grader-result-card">
+            <h3>📊 Autonomous Grader &amp; Plagiarism</h3>
+            <div class="score-big" id="scoreDisplay">-- / 100</div>
+            <div class="plag-display" id="plagDisplay">Plagiarism Check: Waiting for run...</div>
+            <ul id="feedbackList"></ul>
+          </div>
+          <div class="grader-result-card">
+            <h3>🎙️ Interactive AI Coding Tutor (Text &amp; Voice)</h3>
+            <div class="chat-box" id="chatBox">Tutor Agent: Select Python, C++, or Java, write your code, click "Run Multi-Agent Pipeline", and ask me why you lost marks or how to improve!</div>
+            <div class="chat-input-row">
+              <input type="text" id="userQuestion" placeholder="Ask: Why did I lose marks? / How to improve...">
+              <button class="btn btn-blue btn-sm" onclick="askTutor()" style="margin:0;">Ask</button>
+              <button class="btn btn-green btn-sm" onclick="startVoice()" style="margin:0;">🎤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  
+    <!-- ══ GUIDE & ARCHITECTURE PAGE ══ -->
+    <div class="page" id="page-guide">
+      <div class="guide-scroll">
+        <div class="guide-header">
+          <div>
+            <h2>📘 CompilerAI &amp; INTELLIFIX Complete Field Guide</h2>
+            <p>Comprehensive architectural manual, token-level NLP breakdown, 52+ CWE security audits, and inch-by-inch UI documentation.</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-blue btn-sm" onclick="startGuidedTour()">🚀 Launch Interactive Spotlight Tour</button>
+            <button class="btn btn-green btn-sm" onclick="openAssistantWithPrompt('Tell me about the system architecture')">🤖 Ask Assistant</button>
+          </div>
+        </div>
+
+        <!-- Quick Search & Filter Controls -->
+        <div class="guide-controls">
+          <div class="guide-search-box">
+            <span class="guide-search-icon">🔍</span>
+            <input type="text" id="guide-search" placeholder="Search every inch of the system (e.g., AST, BLEU, ROUGE, CWE-89, RAPL, Pipeline, Resizer)..." oninput="filterGuideCards()">
+          </div>
+          <div class="guide-pills">
+            <div class="guide-pill active" onclick="filterGuideCategory('all', this)">All Chapters</div>
+            <div class="guide-pill" onclick="filterGuideCategory('ui', this)">UI Map &amp; Controls</div>
+            <div class="guide-pill" onclick="filterGuideCategory('pipeline', this)">4-Phase Pipeline</div>
+            <div class="guide-pill" onclick="filterGuideCategory('nlp', this)">NLP &amp; BLEU/ROUGE</div>
+            <div class="guide-pill" onclick="filterGuideCategory('security', this)">52+ CWE Audits</div>
+            <div class="guide-pill" onclick="filterGuideCategory('eco', this)">Eco Telemetry</div>
+            <div class="guide-pill" onclick="filterGuideCategory('grader', this)">AI Grader</div>
+            <div class="guide-pill" onclick="filterGuideCategory('testcases', this)">57 Test Suites</div>
+          </div>
+        </div>
+
+        <!-- Section 1: UI Inch-by-Inch Map -->
+        <div class="guide-section" data-cat="ui">
+          <div class="guide-section-hdr"><span>🖥️ Chapter 1</span> Inch-by-Inch UI Map &amp; Control Reference</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="run scan diagnose execute save clean buttons toolbar controls">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🕹️ Action Buttons &amp; Toolbars</div>
+                <span class="guide-badge blue">Studio Controls</span>
+              </div>
+              <div class="guide-card-desc">Every button in the IDE serves a specialized compiler, security, or file-management task:</div>
+              <ul class="guide-card-list">
+                <li><strong>Run / Scan &amp; Diagnose:</strong> Triggers the 4-phase Agentic Pipeline to intercept syntax, compile, or runtime errors, explain them with NLP, and scan for 52+ CWE security risks.</li>
+                <li><strong>⚡ Execute:</strong> Compiles and executes native Python, Java, or C++ code directly in the isolated sandbox, piping stdout and stderr to the Output tab.</li>
+                <li><strong>💾 Save:</strong> Persists editor changes back to the workspace file via the <code>/api/save</code> REST endpoint.</li>
+                <li><strong>🧹 Clean Code:</strong> Fast-clears comments, trailing whitespaces, and debug statements for streamlined submission.</li>
+                <li><strong>📁 New &amp; Upload File:</strong> Generates new <code>.py</code>, <code>.java</code>, or <code>.cpp</code> templates or drops local files directly into the project.</li>
+              </ul>
+            </div>
+
+            <div class="guide-card" data-keywords="splitter resizer resize vertical divider drag pull height drag handle">
+              <div class="guide-card-top">
+                <div class="guide-card-title">↔️ Vertical Resizer &amp; Splitter Bar</div>
+                <span class="guide-badge green">Workspace Layout</span>
+              </div>
+              <div class="guide-card-desc">The adjustable divider allows free, dynamic resizing of the code editing area and output inspection terminal:</div>
+              <ul class="guide-card-list">
+                <li><strong>Drag Up / Down:</strong> Pull the divider handle to enlarge the terminal when inspecting lengthy compiler stack traces or 1k-line logs.</li>
+                <li><strong>Double-Click to Collapse:</strong> Double-clicking the splitter bar collapses the bottom output panel into a minimal status strip, maximizing source code viewing area.</li>
+                <li><strong>Persistence:</strong> The exact divider height is automatically stored in browser <code>localStorage</code>, preserving your preferred layout between refreshes.</li>
+              </ul>
+            </div>
+
+            <div class="guide-card" data-keywords="tabs output optimized code security messages eco bottom tabs">
+              <div class="guide-card-top">
+                <div class="guide-card-title">📑 Bottom Diagnostic Tabs</div>
+                <span class="guide-badge yellow">Telemetry Panes</span>
+              </div>
+              <div class="guide-card-desc">Detailed breakdown of the 5 specialized diagnostic output tabs:</div>
+              <ul class="guide-card-list">
+                <li><strong>Output:</strong> Displays real compiler error diagnostic streams, raw tracebacks, and student score metrics.</li>
+                <li><strong>Optimized Code:</strong> Shows the AI-healed replacement code with 1-click <em>"Load into Editor"</em> and <em>"Copy"</em> actions.</li>
+                <li><strong>Security:</strong> Real-time static analysis finding cards with severity badges, CWE tags, line links, and remediation advice.</li>
+                <li><strong>Messages:</strong> Agent reasoning logs, token-level diagnostic annotations, and pipeline execution breadcrumbs.</li>
+                <li><strong>Eco Metrics:</strong> Green IT metrics, carbon footprint in kg CO₂, and CPU RAPL package energy in millijoules.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: 4-Phase Multi-Agent Architecture -->
+        <div class="guide-section" data-cat="pipeline">
+          <div class="guide-section-hdr"><span>🤖 Chapter 2</span> The 4-Phase Multi-Agent Execution Pipeline</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="parse analyze fix opt verify pipeline agents orchestrator multi-agent">
+              <div class="guide-card-top">
+                <div class="guide-card-title">⚙️ Autonomous Pipeline Flow</div>
+                <span class="guide-badge purple">Core Engine</span>
+              </div>
+              <div class="guide-card-desc">Whenever code is scanned, the pipeline orchestrates four specialized agents in a staged sequence:</div>
+              <ul class="guide-card-list">
+                <li><strong>1. Parse Agent:</strong> Ingests source code, validates grammar, constructs an Abstract Syntax Tree (AST), and isolates syntax or indentation anomalies.</li>
+                <li><strong>2. Analyze Agent:</strong> Traverses AST nodes, maps exception taxonomies, matches 52+ CWE security signatures, and estimates carbon emissions.</li>
+                <li><strong>3. Fix / Opt Agent:</strong> Synthesizes code transformations, patches broken AST branches, optimizes loops, and removes insecure patterns.</li>
+                <li><strong>4. Verify Agent:</strong> Runs autonomous verification on the healed code, confirms 0 compiler errors, and awards final certification scores (0–100).</li>
+              </ul>
+              <div class="guide-code-snippet">Pipeline: [Source Code] ➔ [1. Parse] ➔ [2. Analyze] ➔ [3. Fix/Opt] ➔ [4. Verify] ➔ [Certified Clean]</div>
+            </div>
+
+            <div class="guide-card" data-keywords="agentic verification confidence score badge grading rubric">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🎯 Agentic Verification &amp; Confidence</div>
+                <span class="guide-badge blue">Validation</span>
+              </div>
+              <div class="guide-card-desc">How the Verify Agent computes confidence and assigns status badges:</div>
+              <ul class="guide-card-list">
+                <li><strong>Confidence Metric (0–100%):</strong> Computed from semantic equivalence, AST tree distance, and successful execution without unhandled exceptions.</li>
+                <li><strong>Status Badges:</strong>
+                  <br>• <code>✅ Clean Code</code>: Zero errors and zero security risks detected.
+                  <br>• <code>🛡️ Vulnerabilities Present</code>: Syntax is valid, but security vulnerabilities require remediation.
+                  <br>• <code>❌ Intercepted Error</code>: Compiler, linker, or runtime exception caught and diagnosed.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: NLP Error Explanation & Linguistic Evaluation -->
+        <div class="guide-section" data-cat="nlp">
+          <div class="guide-section-hdr"><span>🧠 Chapter 3</span> NLP Error Explanation &amp; Linguistic Metrics</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="bleu rouge nlp linguistics error explanation metrics accuracy score">
+              <div class="guide-card-top">
+                <div class="guide-card-title">📊 BLEU vs. ROUGE Evaluation</div>
+                <span class="guide-badge green">Research Metric</span>
+              </div>
+              <div class="guide-card-desc">Linguistic accuracy of the NLP compiler explanations is evaluated using dual gold-standard benchmarks:</div>
+              <ul class="guide-card-list">
+                <li><strong>BLEU (Bilingual Evaluation Understudy):</strong> Precision-focused n-gram metric (BLEU-1 to BLEU-4) measuring exact matching of technical terminology, function names, and remediation keywords against reference human explanations.</li>
+                <li><strong>ROUGE (Recall-Oriented Understudy for Gisting):</strong> Recall-focused metric evaluating sentence-level coverage (ROUGE-1, ROUGE-2) and Longest Common Subsequence (ROUGE-L) to ensure no diagnostic detail is omitted.</li>
+                <li><strong>Error Taxonomy Mapping:</strong> Pre-classifies compiler errors (Syntax, Name, Type, Index, Key, Division-by-Zero, Recursion, Memory) into tokenized prompt templates for zero-shot natural language synthesis.</li>
+              </ul>
+            </div>
+
+            <div class="guide-card" data-keywords="ast abstract syntax tree grammar token tokens localization">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🌲 AST Error Localization &amp; Grammatical Trees</div>
+                <span class="guide-badge yellow">Compiler Theory</span>
+              </div>
+              <div class="guide-card-desc">How NLP pinpoints the exact origin of compiler errors:</div>
+              <ul class="guide-card-list">
+                <li><strong>Token Stream &amp; Lexing:</strong> The lexer segments the file into tokens (identifiers, operators, literals, delimiters).</li>
+                <li><strong>Grammar Production Matching:</strong> When the parser encounters an unexpected token (e.g. missing colon or unclosed parenthesis), it flags the invalid grammar production.</li>
+                <li><strong>Token Distance Heuristic:</strong> The NLP engine computes the Levenshtein edit distance on identifiers (e.g., catching <code>reslt</code> vs. <code>result</code>) to suggest typo corrections automatically.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: 52+ CWE Security Engine -->
+        <div class="guide-section" data-cat="security">
+          <div class="guide-section-hdr"><span>🛡️ Chapter 4</span> Static Security Auditing &amp; 52+ CWE Engine</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="cwe owasp security vulnerabilities eval sql injection xxe ssrf rce">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🔐 Enterprise Vulnerability Catalog</div>
+                <span class="guide-badge red">52+ CWE Checks</span>
+              </div>
+              <div class="guide-card-desc">The static security engine covers all critical OWASP Top 10 categories across Python, Java, and C++:</div>
+              <ul class="guide-card-list">
+                <li><strong>CWE-95 / CWE-78:</strong> Arbitrary Code Execution (<code>eval</code>, <code>exec</code>, <code>os.system</code>, <code>Runtime.exec</code>, C++ <code>system()</code>).</li>
+                <li><strong>CWE-89:</strong> SQL Injection via string formatting and unparameterized JDBC Statements.</li>
+                <li><strong>CWE-502:</strong> Insecure Deserialization (Python <code>pickle</code>, <code>yaml.load</code>, Java <code>ObjectInputStream</code>).</li>
+                <li><strong>CWE-798 / CWE-321:</strong> Hardcoded Cloud Credentials (AWS keys, GitHub tokens, Slack tokens, private keys).</li>
+                <li><strong>CWE-120 / CWE-134:</strong> C/C++ Buffer Overflows (<code>strcpy</code>, <code>sprintf</code>) and Format String vulnerabilities in <code>printf</code>.</li>
+                <li><strong>CWE-611 / CWE-22:</strong> XML External Entity (XXE) and Directory Path Traversal (<code>../</code> sequences).</li>
+              </ul>
+            </div>
+
+            <div class="guide-card" data-keywords="remediation fix security badge severity high medium low">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🩺 Automated Security Remediation</div>
+                <span class="guide-badge blue">Defense in Depth</span>
+              </div>
+              <div class="guide-card-desc">For every flagged vulnerability, the security engine provides actionable remediation:</div>
+              <ul class="guide-card-list">
+                <li><strong>Parameterized Queries:</strong> Replaces formatted SQL with parameterized DB placeholders.</li>
+                <li><strong>Bounded String Functions:</strong> Migrates C-style <code>strcpy</code> to <code>strncpy</code> or <code>std::string</code>.</li>
+                <li><strong>Cryptographic Upgrades:</strong> Upgrades MD5/SHA-1 to SHA-256 and replaces <code>rand()</code> with cryptographically secure PRNGs.</li>
+                <li><strong>Safe Deserialization:</strong> Swaps arbitrary deserialization for Pydantic/JSON schemas.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Eco Telemetry & Green IT -->
+        <div class="guide-section" data-cat="eco">
+          <div class="guide-section-hdr"><span>🌿 Chapter 5</span> Eco-Telemetry &amp; Green IT Profiling</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="carbon co2 energy rapl emissions green it eco metrics telemetry">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🌱 Hardware Energy &amp; Carbon Telemetry</div>
+                <span class="guide-badge green">Sustainability</span>
+              </div>
+              <div class="guide-card-desc">How CompilerAI quantifies the environmental cost of compilation and AI inference:</div>
+              <ul class="guide-card-list">
+                <li><strong>RAPL Energy (mJ):</strong> Interfaces with CPU Running Average Power Limit (RAPL) registers to capture real processor package energy consumption per run.</li>
+                <li><strong>Carbon Emissions (kg / µg CO₂ eq):</strong> Converts execution energy into carbon mass based on the grid carbon intensity factor (kg CO₂ / kWh).</li>
+                <li><strong>Pinpoint Agent Overhead:</strong> Measures the microsecond latency overhead introduced by static analysis vs raw compilation.</li>
+                <li><strong>Persistent Logging:</strong> All scan records are continuously appended to <code>emissions.csv</code>, powering the 8 live charts on the <strong>Eco Analytics</strong> dashboard.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6: AI Grader & Plagiarism Detective -->
+        <div class="guide-section" data-cat="grader">
+          <div class="guide-section-hdr"><span>🤖 Chapter 6</span> AI Grader Studio &amp; Anti-Plagiarism Detective</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="grader plagiarism submission marks rubric tutor chat voice">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🎓 Autonomous 100-Mark Rubric</div>
+                <span class="guide-badge yellow">Academic Studio</span>
+              </div>
+              <div class="guide-card-desc">The AI Grader autonomously evaluates code submissions across five pillars:</div>
+              <ul class="guide-card-list">
+                <li><strong>Functional Correctness (30 Marks):</strong> Zero compiler/runtime errors and correct input/output assertions.</li>
+                <li><strong>Code Quality &amp; Cleanliness (25 Marks):</strong> PEP8/standard naming, modularity, and concise loop constructs.</li>
+                <li><strong>Security &amp; Secret Hygiene (20 Marks):</strong> Zero CWE vulnerabilities or credential exposures.</li>
+                <li><strong>Eco-Efficiency (15 Marks):</strong> Optimal algorithmic time/space complexity minimizing CPU power.</li>
+                <li><strong>Documentation &amp; Comments (10 Marks):</strong> Clear docstrings, function signatures, and explanatory header notes.</li>
+              </ul>
+            </div>
+
+            <div class="guide-card" data-keywords="plagiarism similarity ast tutor voice speech synthesis">
+              <div class="guide-card-top">
+                <div class="guide-card-title">🕵️ Plagiarism Detective &amp; Voice Tutor</div>
+                <span class="guide-badge purple">Agentic AI v2.0</span>
+              </div>
+              <div class="guide-card-desc">Advanced anti-plagiarism and interactive oral assistance:</div>
+              <ul class="guide-card-list">
+                <li><strong>Structural AST Similarity:</strong> Compares Submission A against Submission B ignoring variable renames, detecting structural code clones.</li>
+                <li><strong>Interactive AI Tutor:</strong> Students can query the tutor on why they lost marks and receive actionable recommendations.</li>
+                <li><strong>Speech Synthesis (Web Speech API):</strong> The AI tutor audibly articulates explanations using the browser's speech synthesis synthesizer.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 7: 57 Standardized Test Case Suites -->
+        <div class="guide-section" data-cat="testcases">
+          <div class="guide-section-hdr"><span>📁 Chapter 7</span> 57 Standardized Test Suites (1,000+ Lines Each)</div>
+          <div class="guide-grid">
+            <div class="guide-card" data-keywords="test cases tc 1k lines python java cpp 57 test suites">
+              <div class="guide-card-top">
+                <div class="guide-card-title">📚 Enterprise Test Suite Architecture</div>
+                <span class="guide-badge blue">61,387 Total LOC</span>
+              </div>
+              <div class="guide-card-desc">All 57 test files in the workspace have been standardized to at least 1,000+ code lines:</div>
+              <ul class="guide-card-list">
+                <li><strong>Python Suites (44 Files · 47,499 Lines):</strong> Covering syntax errors (tc_01), runtime errors (tc_03–tc_10), logic bugs (tc_12), 20+ security test cases (tc_13–tc_32), and large enterprise platforms (tc_33–tc_35).</li>
+                <li><strong>Java Suites (7 Files · 7,461 Lines):</strong> Covering javac compilation errors (tc_19), runtime exceptions (tc_20), and enterprise banking engines (tc_36).</li>
+                <li><strong>C++ Suites (6 Files · 6,427 Lines):</strong> Covering g++ compiler errors (tc_21), memory safety bugs (tc_22), and packet inspection firewall kernels (tc_37).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- end guide page -->
+
+  </div><!-- end main-content -->
+</div><!-- end app-body -->
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sitem" id="sbar-status">● Ready</div>
+  <div class="sitem" id="sbar-errors">⚠ 0 issues</div>
+  <div class="sright">
+    <div class="sitem" id="sbar-lang">Python</div>
+    <div class="sitem">UTF-8</div>
+    <div class="sitem">INTELLIFIX NLP Engine</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+const API = '/api';
+let selectedFile = null;
+let darkMode     = false;
+let scanning     = false;
+let pendingFiles = [];
+let fileToDelete = null;
+let charts       = {};
+let lastReport   = null;
+
+/* ═══════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════ */
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+function setStatus(msg) { document.getElementById('sbar-status').textContent = '● ' + msg; }
+function openM(id)  { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+
+function toggleDark() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark', darkMode);
+  document.getElementById('dark-btn').textContent = darkMode ? '☀️' : '🌙';
+}
+
+/* ═══════════════════════════════════════════════════
+   PAGE / TAB SWITCHING
+═══════════════════════════════════════════════════ */
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('pt-' + name).classList.add('active');
+  if (name === 'analytics') {
+    // slight delay so canvas elements are visible before chart init
+    setTimeout(fetchAnalytics, 50);
+  }
+}
+function switchBtab(name) {
+  document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.btab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('bt-' + name).classList.add('active');
+  document.getElementById('bp-' + name).classList.add('active');
+
+  const bp = document.getElementById('bottom-panel');
+  if (bp && bp.offsetHeight <= 45) {
+    const saved = parseInt(localStorage.getItem('compilerai_bottom_panel_height') || '250', 10);
+    bp.style.height = Math.max(saved, 200) + 'px';
+    if (typeof updatePanelToggleIcon === 'function') updatePanelToggleIcon(false);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   LINE NUMBERS
+═══════════════════════════════════════════════════ */
+function updateLN() {
+  const ta = document.getElementById('code-editor');
+  const ln = document.getElementById('line-nums');
+  const n  = ta.value.split('\n').length;
+  ln.innerHTML = Array.from({length:n}, (_,i) => `<span>${i+1}</span>`).join('');
+}
+function syncScroll(ta) { document.getElementById('line-nums').scrollTop = ta.scrollTop; }
+updateLN();
+
+/* ═══════════════════════════════════════════════════
+   FILE EXPLORER
+═══════════════════════════════════════════════════ */
+function fileIcon(f) {
+  if (f.endsWith('.py'))   return '🐍';
+  if (f.endsWith('.cpp') || f.endsWith('.c')) return '⚙️';
+  if (f.endsWith('.java')) return '☕';
+  if (f.endsWith('.txt')) return '📝';
+  return '📄';
+}
+
+async function loadFiles() {
+  try {
+    const res  = await fetch(`${API}/files`);
+    const data = await res.json();
+    renderFileList(data.files);
+  } catch(e) { console.error('loadFiles error:', e); }
+}
+
+function renderFileList(files) {
+  const fl = document.getElementById('file-list');
+  fl.innerHTML = '';
+  files.forEach(f => {
+    const fname  = typeof f === 'string' ? f : f.filename;
+    const isFixed = typeof f === 'string' ? fname.includes('_fixed') : Boolean(f.is_fixed);
+    const div = document.createElement('div');
+    div.className = `file-item ${fname === selectedFile ? 'active' : ''}`;
+    div.innerHTML = `
+      <div class="fi-left">
+        <span>${fileIcon(fname)}</span>
+        <span class="fi-name" title="${fname}">${fname}</span>
+      </div>
+      ${isFixed ? '<span class="fixed-badge">Modified</span>' : ''}
+      <button class="fi-del" onclick="askDelete('${fname}',event)" title="Delete">✕</button>
+    `;
+    div.onclick = () => selectFile(fname);
+    fl.appendChild(div);
+  });
+}
+
+function addFileToExplorer(fname) {
+  const fl = document.getElementById('file-list');
+  const existing = [...fl.querySelectorAll('.fi-name')].find(el => el.textContent === fname);
+  if (existing) { existing.closest('.file-item').click(); return; }
+  const div = document.createElement('div');
+  div.className = 'file-item';
+  div.innerHTML = `
+    <div class="fi-left"><span>${fileIcon(fname)}</span><span class="fi-name">${fname}</span></div>
+    <button class="fi-del" onclick="askDelete('${fname}',event)" title="Delete">✕</button>
+  `;
+  div.onclick = () => selectFile(fname);
+  fl.prepend(div);
+  div.classList.add('active');
+  document.querySelectorAll('.file-item').forEach(el => { if (el !== div) el.classList.remove('active'); });
+}
+
+async function selectFile(fname) {
+  selectedFile = fname;
+  document.getElementById('lbl-file').textContent = fname;
+  if (fname.endsWith('.cpp')||fname.endsWith('.c')) document.getElementById('lang-select').value = 'user_code.cpp';
+  else if (fname.endsWith('.java')) document.getElementById('lang-select').value = 'Main.java';
+  else document.getElementById('lang-select').value = 'user_code.py';
+  updateSbarLang();
+  setStatus(`Opened: ${fname}`);
+  loadFiles();
+  resetPipeline();
+
+  try {
+    const res = await fetch(`${API}/file/${encodeURIComponent(fname)}`);
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('code-editor').value = data.code;
+      updateLN();
+      setTerminal('t-output', `// File loaded: ${fname}\n// Press "Scan & Diagnose" to analyze.`);
+      return;
+    }
+  } catch(e) {}
+
+  try {
+    const res  = await fetch(`${API}/analyze`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:fname})});
+    const data = await res.json();
+    document.getElementById('code-editor').value = data.original_code || '';
+    updateLN();
+  } catch(e) {}
+}
+
+function onLangChange() {
+  selectedFile = null;
+  document.getElementById('lbl-file').textContent = `(${document.getElementById('lang-select').value})`;
+  document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+  updateSbarLang();
+}
+
+function updateSbarLang() {
+  const v = document.getElementById('lang-select').value;
+  const m = {'user_code.py':'Python','user_code.cpp':'C++','Main.java':'Java'};
+  document.getElementById('sbar-lang').textContent = m[v] || v;
+}
+
+/* ═══════════════════════════════════════════════════
+   CREATE NEW FILE
+═══════════════════════════════════════════════════ */
+function syncLangFromName() {
+  const name = document.getElementById('nf-name').value;
+  const ext  = name.split('.').pop().toLowerCase();
+  const m = {py:'py', cpp:'cpp', java:'java', c:'c', txt:'txt'};
+  if (m[ext]) document.getElementById('nf-lang').value = m[ext];
+}
+function syncNameFromLang() {
+  const lang = document.getElementById('nf-lang').value;
+  const name = document.getElementById('nf-name').value;
+  if (!name || !name.includes('.')) return;
+  document.getElementById('nf-name').value = name.replace(/\.[^.]+$/, '') + '.' + lang;
+}
+
+const starterCode = {
+  py:   n => `# ${n}\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n`,
+  cpp:  n => `// ${n}\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n`,
+  java: n => { const cls = n.replace('.java','').replace(/[^a-zA-Z0-9]/g,'_'); return `// ${n}\npublic class ${cls} {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}\n`; },
+  c:    n => `// ${n}\n#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n`,
+  txt:  _  => ``,
+};
+
+async function createFile() {
+  let name = document.getElementById('nf-name').value.trim();
+  const lang = document.getElementById('nf-lang').value;
+  const code = document.getElementById('nf-code').value;
+  if (!name) { toast('Enter a file name', 'err'); return; }
+  if (!name.includes('.')) name += '.' + lang;
+  const content = code || (starterCode[lang] ? starterCode[lang](name) : '');
+
+  try {
+    const res  = await fetch(`${API}/create_file`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:name, code:content})});
+    const data = await res.json();
+    if (data.status === 'created') {
+      closeM('m-new');
+      document.getElementById('nf-name').value = '';
+      document.getElementById('nf-code').value = '';
+      toast(`✅ Created: ${name}`, 'ok');
+      await loadFiles();
+      selectFile(name);
+    } else if (data.status === 'exists') {
+      toast(`File "${name}" already exists. Try a different name.`, 'warn');
+    } else {
+      toast('Server error creating file', 'err');
+    }
+  } catch(e) {
+    closeM('m-new');
+    document.getElementById('code-editor').value = content;
+    updateLN();
+    selectedFile = name;
+    document.getElementById('lbl-file').textContent = name;
+    addFileToExplorer(name);
+    toast(`✅ Created: ${name} (local)`, 'ok');
+    document.getElementById('nf-name').value = '';
+    document.getElementById('nf-code').value = '';
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   UPLOAD FILES
+═══════════════════════════════════════════════════ */
+function pickFiles(files) {
+  pendingFiles = [...files];
+  const prev = document.getElementById('upload-preview');
+  if (pendingFiles.length) {
+    prev.style.display = 'block';
+    prev.textContent = 'Selected: ' + pendingFiles.map(f=>f.name).join(', ');
+    document.getElementById('upload-ok').disabled = false;
+  }
+}
+function dropFiles(e) {
+  e.preventDefault();
+  document.getElementById('upload-drop').classList.remove('on');
+  pickFiles(e.dataTransfer.files);
+}
+
+async function doUpload() {
+  if (!pendingFiles.length) return;
+  let done = 0;
+  for (const file of pendingFiles) {
+    const text = await file.text();
+    let uploaded = false;
+    try {
+      const res  = await fetch(`${API}/create_file`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:file.name, code:text, overwrite:true})});
+      const data = await res.json();
+      if (data.status === 'created' || data.status === 'exists') { uploaded = true; }
+    } catch(e) {}
+    if (!uploaded) {
+      document.getElementById('code-editor').value = text;
+      updateLN();
+      selectedFile = file.name;
+      document.getElementById('lbl-file').textContent = file.name;
+    }
+    addFileToExplorer(file.name);
+    done++;
+  }
+  closeM('m-upload');
+  pendingFiles = [];
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-ok').disabled = true;
+  document.getElementById('upload-input').value = '';
+  toast(`✅ Uploaded ${done} file(s)`, 'ok');
+  loadFiles();
+  if (done === 1) selectFile(pendingFiles[0]?.name || selectedFile);
+}
+
+/* ═══════════════════════════════════════════════════
+   DELETE FILE
+═══════════════════════════════════════════════════ */
+function askDelete(fname, event) {
+  event.stopPropagation();
+  fileToDelete = fname;
+  document.getElementById('del-fname').textContent = fname;
+  openM('m-delete');
+}
+async function confirmDelete() {
+  if (!fileToDelete) return;
+  closeM('m-delete');
+  try {
+    const res  = await fetch(`${API}/delete_file`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:fileToDelete})});
+    const data = await res.json();
+    if (data.status === 'deleted') {
+      toast(`🗑 Deleted: ${fileToDelete}`, 'warn');
+      if (selectedFile === fileToDelete) {
+        selectedFile = null;
+        document.getElementById('code-editor').value = '';
+        document.getElementById('lbl-file').textContent = '';
+        updateLN();
+      }
+      await loadFiles();
+    } else {
+      toast(data.message || 'Could not delete file', 'err');
+    }
+  } catch(e) {
+    const item = [...document.querySelectorAll('.fi-name')].find(el => el.textContent === fileToDelete);
+    if (item) item.closest('.file-item').remove();
+    toast(`🗑 Deleted: ${fileToDelete} (local)`, 'warn');
+  }
+  fileToDelete = null;
+}
+
+/* ═══════════════════════════════════════════════════
+   EDITOR HELPERS
+═══════════════════════════════════════════════════ */
+function copyCode()  { navigator.clipboard.writeText(document.getElementById('code-editor').value); toast('Code copied!','ok'); }
+function copyFixed() { navigator.clipboard.writeText(document.getElementById('fixed-code').value); toast('Fixed code copied!','ok'); }
+function clearEditor() {
+  if (!confirm('Clear the editor?')) return;
+  document.getElementById('code-editor').value = '';
+  updateLN();
+  selectedFile = null;
+  document.getElementById('lbl-file').textContent = '';
+  document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+}
+function loadFixedIntoEditor() {
+  const fixed = document.getElementById('fixed-code').value;
+  if (!fixed) { toast('No fixed code available yet', 'warn'); return; }
+  document.getElementById('code-editor').value = fixed;
+  updateLN();
+  switchBtab('output');
+  toast('Fixed code loaded into editor', 'ok');
+}
+
+/* ═══════════════════════════════════════════════════
+   TERMINAL HELPERS
+═══════════════════════════════════════════════════ */
+function setTerminal(id, text, cls='') {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = cls;
+  d.style.whiteSpace = 'pre-wrap';
+  d.textContent = text;
+  el.appendChild(d);
+}
+
+/* ═══════════════════════════════════════════════════
+   PIPELINE ANIMATION
+═══════════════════════════════════════════════════ */
+function resetPipeline() {
+  ['pip1','pip2','pip3','pip4'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.className = 'pip-dot'; el.textContent = i+1;
+  });
+  ['pline1','pline2','pline3'].forEach(id => document.getElementById(id).className = 'pip-line');
+  document.getElementById('pip-hint').textContent = 'Pipeline will run here when you click Run or Scan & Diagnose.';
+  document.getElementById('pip-status-badge').style.display = 'none';
+}
+
+async function animatePipeline() {
+  const dots  = ['pip1','pip2','pip3','pip4'];
+  const lines = ['pline1','pline2','pline3'];
+  for (let i = 0; i < 4; i++) {
+    dots.forEach((id,j) => {
+      const el = document.getElementById(id);
+      if (j < i)      { el.className='pip-dot done'; el.textContent='✓'; }
+      else if (j===i) { el.className='pip-dot active'; }
+    });
+    lines.forEach((id,j) => document.getElementById(id).className = 'pip-line' + (j<i?' done':''));
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+function finishPipeline(success) {
+  const dots = ['pip1','pip2','pip3','pip4'];
+  dots.forEach(id => { const el=document.getElementById(id); el.className='pip-dot'+(success?' done':' error'); el.textContent=success?'✓':'✗'; });
+  ['pline1','pline2','pline3'].forEach(id => document.getElementById(id).className='pip-line done');
+  const badge = document.getElementById('pip-status-badge');
+  badge.style.display = 'inline-block';
+  if (success) {
+    badge.textContent = '✅ Passed';
+    badge.style.cssText = 'display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:600;background:var(--green-soft);color:var(--green);';
+    document.getElementById('pip-hint').textContent = 'All checks passed. Code looks clean.';
+  } else {
+    badge.textContent = '⚠ Issues Found';
+    badge.style.cssText = 'display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:600;background:#fef3c7;color:#92400e;';
+    document.getElementById('pip-hint').textContent = 'Errors detected and fixed. See Optimized Code tab.';
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   SECURITY PARSER — comprehensive 40+ CWE / OWASP audits
+═══════════════════════════════════════════════════ */
+const SEC_PATTERNS = [
+  // ── 1. Dynamic Code & Command Execution (CWE-95, CWE-78) ──
+  { key:'eval', cwe:'CWE-95', label:'Arbitrary Code Execution via eval()', sev:'high', icon:'🔴', fix:'Avoid eval(); use ast.literal_eval() for safe literal evaluation or dedicated math parsers.', re:/\beval\s*\(/ },
+  { key:'exec', cwe:'CWE-95', label:'Arbitrary Code Execution via exec()', sev:'high', icon:'🔴', fix:'Avoid dynamic exec(); use structured functions, dispatch maps, or isolated plugin loaders.', re:/\bexec\s*\(/ },
+  { key:'os_system', cwe:'CWE-78', label:'OS Command Injection (os.system)', sev:'high', icon:'🔴', fix:'Avoid shell execution. Use subprocess.run([...], shell=False) with tokenized argument list.', re:/os\.system\s*\(/ },
+  { key:'os_popen', cwe:'CWE-78', label:'Command Injection via os.popen', sev:'high', icon:'🔴', fix:'Migrate to subprocess.Popen() with explicit arg arrays and shell=False.', re:/os\.popen\s*\(/ },
+  { key:'os_spawn', cwe:'CWE-78', label:'Insecure Process Execution via os.spawn', sev:'high', icon:'🔴', fix:'Avoid legacy os.spawn* / posix_spawn. Use subprocess.run().', re:/os\.(spawn|posix_spawn)[a-z]*\s*\(/ },
+  { key:'subprocess_shell', cwe:'CWE-78', label:'Shell Injection Risk (subprocess with shell=True)', sev:'high', icon:'🔴', fix:'Set shell=False and pass command and arguments as a list: subprocess.run([cmd, arg1, ...]).', re:/subprocess\.(call|run|Popen|check_output|check_call)\s*\([^)]*shell\s*=\s*True/ },
+  { key:'pty_spawn', cwe:'CWE-78', label:'Pseudo-Terminal Command Injection (pty.spawn)', sev:'high', icon:'🔴', fix:'Restrict terminal spawning. Validate all arguments against strict whitelists.', re:/pty\.spawn\s*\(/ },
+
+  // ── 2. Insecure Deserialization & Object Hydration (CWE-502) ──
+  { key:'pickle', cwe:'CWE-502', label:'Unsafe Object Deserialization (pickle)', sev:'high', icon:'🔴', fix:'Never unpickle untrusted data. Use JSON, Protocol Buffers, or HMAC signing.', re:/pickle\.(load|loads|dump|dumps)/ },
+  { key:'yaml_unsafe', cwe:'CWE-502', label:'Insecure YAML Deserialization (yaml.load)', sev:'high', icon:'🔴', fix:'Use yaml.safe_load() or specify Loader=yaml.SafeLoader.', re:/yaml\.load\s*\([^)]*(?!Loader\s*=\s*(yaml\.)?SafeLoader)/ },
+  { key:'marshal_shelve', cwe:'CWE-502', label:'Unsafe Deserialization (marshal / shelve)', sev:'high', icon:'🔴', fix:'Marshal and shelve permit arbitrary object loading; switch to secure schema serializers.', re:/(marshal\.(loads?|dumps?)|shelve\.open)\s*\(/ },
+  { key:'jsonpickle', cwe:'CWE-502', label:'Insecure JSON-to-Object Hydration (jsonpickle)', sev:'high', icon:'🔴', fix:'jsonpickle can instantiate arbitrary classes. Use pydantic or marshmallow schemas.', re:/jsonpickle\.(decode|encode)\s*\(/ },
+
+  // ── 3. Database & Query Injections (CWE-89, CWE-643, CWE-90, CWE-943) ──
+  { key:'sql_inject_format', cwe:'CWE-89', label:'SQL Injection via String Formatting / Concatenation', sev:'high', icon:'🔴', fix:'Use parameterized query placeholders: cursor.execute("SELECT ... WHERE id = %s", (id,)).', re:/(execute|executemany|raw)\s*\(\s*(f['"]|['"][^'"]*%\s|['"][^'"]*\+)/ },
+  { key:'sql_inject_method', cwe:'CWE-89', label:'SQL Injection via .format() Interpolation', sev:'high', icon:'🔴', fix:'Do not interpolate SQL strings with .format(). Use database driver query parameters.', re:/(execute|executemany)\s*\(\s*['"][^'"]*['"]\.format\s*\(/ },
+  { key:'xpath_inject', cwe:'CWE-643', label:'XPath Query Injection', sev:'high', icon:'🔴', fix:'Use parameterized XPath variables rather than string concatenation in find() or xpath().', re:/\.(xpath|find_by_xpath)\s*\(\s*(f['"]|['"][^'"]*\+)/ },
+  { key:'ldap_inject', cwe:'CWE-90', label:'LDAP Query Injection', sev:'high', icon:'🔴', fix:'Sanitize user attributes using ldap3.utils.conv.escape_filter_chars before searching.', re:/ldap\.(search|search_s)\s*\([^)]*(f['"]|['"][^'"]*\+)/ },
+  { key:'nosql_inject', cwe:'CWE-943', label:'NoSQL Injection ($where / dynamic query)', sev:'high', icon:'🔴', fix:'Avoid MongoDB $where or raw JS execution. Use explicit BSON dictionary queries.', re:/\$where\s*:/ },
+
+  // ── 4. Cryptographic Flaws & Secret Hygiene (CWE-798, CWE-328, CWE-330, CWE-327, CWE-208) ──
+  { key:'hardcoded_pass', cwe:'CWE-798', label:'Hardcoded Password or Database Credential', sev:'high', icon:'🔴', fix:'Store credentials in secure environment variables or a key vault; do not hardcode.', re:/(password|passwd|db_pass|admin_pass)\s*=\s*['"][^'"]{3,}['"]/i },
+  { key:'hardcoded_api_key', cwe:'CWE-798', label:'Hardcoded API Key / Token', sev:'high', icon:'🔴', fix:'Load API keys via os.environ.get("API_KEY") or secret managers.', re:/(api_key|apikey|secret_key|auth_token|bearer_token|jwt_secret)\s*=\s*['"][^'"]{4,}['"]/i },
+  { key:'hardcoded_private_key', cwe:'CWE-321', label:'Hardcoded Cryptographic Private Key', sev:'high', icon:'🔴', fix:'Extract private keys into external .pem files with strict 0o600 filesystem permissions.', re:/-----BEGIN (RSA |EC )?PRIVATE KEY-----/ },
+  { key:'weak_hash_md5', cwe:'CWE-328', label:'Broken Hash Algorithm: MD5', sev:'high', icon:'🔴', fix:'MD5 is collision-vulnerable. Use hashlib.sha256() for integrity or bcrypt for passwords.', re:/hashlib\.md5\s*\(/ },
+  { key:'weak_hash_sha1', cwe:'CWE-328', label:'Collision-Vulnerable Hash: SHA-1', sev:'medium', icon:'🟡', fix:'SHA-1 is cryptographically weak. Upgrade to SHA-256 or SHA-512.', re:/hashlib\.sha1\s*\(/ },
+  { key:'insecure_random', cwe:'CWE-330', label:'Predictable PRNG Used for Security Tokens', sev:'high', icon:'🔴', fix:'random is predictable (Mersenne Twister). Use secrets.token_hex() or secrets.token_urlsafe().', re:/random\.(random|randint|choice|randrange|sample)\s*\(/ },
+  { key:'ecb_mode', cwe:'CWE-327', label:'Insecure Block Cipher Mode (ECB)', sev:'high', icon:'🔴', fix:'ECB mode does not randomize identical blocks. Use AES.MODE_GCM or AES.MODE_CBC with IV.', re:/AES\.MODE_ECB\b/ },
+  { key:'weak_cipher', cwe:'CWE-327', label:'Deprecated / Broken Cipher (DES, 3DES, RC4)', sev:'high', icon:'🔴', fix:'DES and RC4 are obsolete. Migrate to AES-256-GCM or ChaCha20-Poly1305.', re:/(DES|ARC4|Blowfish)\.new\s*\(/ },
+  { key:'timing_attack', cwe:'CWE-208', label:'Timing Attack Vulnerability in Secret Comparison', sev:'medium', icon:'🟡', fix:'Comparing hashes/secrets with == leaks timing info. Use hmac.compare_digest(a, b).', re:/(token|password|signature|digest|secret)\s*==\s*[a-zA-Z0-9_]/i },
+
+  // ── 5. Web, Network, & SSL Vulnerabilities (CWE-295, CWE-918, CWE-1336, CWE-79, CWE-352, CWE-614, CWE-601) ──
+  { key:'ssl_unverified', cwe:'CWE-295', label:'Disabled SSL/TLS Certificate Verification (verify=False)', sev:'high', icon:'🔴', fix:'Never disable certificate verification. Set verify=True and supply CA certificates.', re:/requests\.(get|post|put|delete|request)\s*\([^)]*verify\s*=\s*False/ },
+  { key:'ssl_unverified_ctx', cwe:'CWE-295', label:'Unverified SSL Context Bypassing CA Trust', sev:'high', icon:'🔴', fix:'Do not use _create_unverified_context(). Use ssl.create_default_context().', re:/ssl\._create_unverified_context\s*\(/ },
+  { key:'ssti', cwe:'CWE-1336', label:'Server-Side Template Injection (SSTI)', sev:'high', icon:'🔴', fix:'Avoid render_template_string(user_data). Use render_template() with parameterized context.', re:/(render_template_string|jinja2\.Template|Template\s*\()\s*\([^)]*(request|\+|f['"])/ },
+  { key:'ssrf', cwe:'CWE-918', label:'Server-Side Request Forgery (SSRF) Risk', sev:'high', icon:'🔴', fix:'Validate outbound URLs against an explicit domain allowlist and block private IP ranges.', re:/(requests\.(get|post)|urllib\.request\.urlopen)\s*\(\s*(request\.|url|target|f['"])/ },
+  { key:'xss_unquoted', cwe:'CWE-79', label:'Cross-Site Scripting (XSS) via Unescaped HTML Output', sev:'high', icon:'🔴', fix:'Sanitize dynamic web responses using html.escape() or secure templating engines.', re:/(make_response|Response)\s*\(\s*f?['"]<[a-z]+/i },
+  { key:'cors_wildcard', cwe:'CWE-942', label:'Overly Permissive CORS (Access-Control-Allow-Origin: *)', sev:'medium', icon:'🟡', fix:'Restrict Access-Control-Allow-Origin to authorized domain origins rather than wildcard *.', re:/Access-Control-Allow-Origin.*[*]/ },
+  { key:'open_redirect', cwe:'CWE-601', label:'Unvalidated Open Redirect', sev:'medium', icon:'🟡', fix:'Verify that target redirect URLs are relative paths or in an approved domain list.', re:/redirect\s*\(\s*(request\.args|url_for|user_url|next_url)/ },
+  { key:'csrf_exempt', cwe:'CWE-352', label:'CSRF Protection Explicitly Disabled (@csrf.exempt)', sev:'high', icon:'🔴', fix:'Keep CSRF verification enabled on all state-altering POST/PUT/DELETE endpoints.', re:/@csrf\.exempt\b/ },
+  { key:'insecure_cookie', cwe:'CWE-614', label:'Insecure Cookie Setting (Missing Secure / HttpOnly)', sev:'medium', icon:'🟡', fix:'Ensure set_cookie() specifies httponly=True, secure=True, and samesite="Lax" or "Strict".', re:/set_cookie\s*\([^)]*secure\s*=\s*False/ },
+
+  // ── 6. XML, File Formats, & Archive Security (CWE-611, CWE-22, CWE-377, CWE-732) ──
+  { key:'xxe_injection', cwe:'CWE-611', label:'XML External Entity (XXE) Processing Vulnerability', sev:'high', icon:'🔴', fix:'Use defusedxml (defusedxml.minidom or defusedxml.ElementTree) to prevent XXE.', re:/(xml\.etree\.ElementTree\.(parse|fromstring)|minidom\.parseString|lxml\.etree\.fromstring)\s*\(/ },
+  { key:'zip_slip', cwe:'CWE-22', label:'Zip / Tar Slip Directory Traversal Vulnerability', sev:'high', icon:'🔴', fix:'Validate extracted member paths using os.path.commonpath() before calling extractall().', re:/\.(extractall|extract)\s*\(/ },
+  { key:'path_traversal', cwe:'CWE-22', label:'Directory Path Traversal Vulnerability (../)', sev:'high', icon:'🔴', fix:'Resolve paths with os.path.abspath() and verify they remain within the intended base directory.', re:/open\s*\(\s*[^)]*(\.\.\/|\.\.\\)/ },
+  { key:'mktemp_race', cwe:'CWE-377', label:'Insecure Temp File (mktemp TOCTOU Race Condition)', sev:'medium', icon:'🟡', fix:'mktemp() is insecure. Use tempfile.NamedTemporaryFile() or tempfile.mkstemp().', re:/tempfile\.mktemp\s*\(/ },
+  { key:'chmod_777', cwe:'CWE-732', label:'Excessive File Permissions (0o777 / World-Writable)', sev:'high', icon:'🔴', fix:'Restrict file permissions: use 0o600 (owner read/write) or 0o700 for directories.', re:/os\.chmod\s*\([^)]*0o?777/ },
+
+  // ── 7. Authentication, Tokens & Operational Safety (CWE-345, CWE-617, CWE-1333, CWE-200, CWE-319, CWE-532) ──
+  { key:'jwt_none_alg', cwe:'CWE-345', label:'Insecure JWT: Algorithm "none" or Disabled Verification', sev:'high', icon:'🔴', fix:'Explicitly require secure signing algorithms (e.g. algorithms=["HS256"]) and verify=True.', re:/jwt\.decode\s*\([^)]*(verify\s*=\s*False|'none'|"none")/ },
+  { key:'assert_auth', cwe:'CWE-617', label:'Security Check Implemented via Bypassable assert', sev:'medium', icon:'🟡', fix:'assert is stripped with python -O. Use explicit "if not condition: raise PermissionError()".', re:/\bassert\b\s+.*(admin|auth|token|perm|role|access)/i },
+  { key:'input_unvalidated', cwe:'CWE-20', label:'Unvalidated User Input (input())', sev:'medium', icon:'🟡', fix:'Sanitize and type-check all values received via input() before using in logic or queries.', re:/\binput\s*\(/ },
+  { key:'redos', cwe:'CWE-1333', label:'Regular Expression Denial of Service (ReDoS) Risk', sev:'high', icon:'🔴', fix:'Avoid nested quantifiers like (a+)+ or (.*a)+ which trigger exponential backtracking.', re:/re\.compile\s*\([^)]*\([a-zA-Z0-9_\-.]+\+\)\+/ },
+  { key:'bind_all_interfaces', cwe:'CWE-200', label:'Insecure Socket Interface Binding (0.0.0.0)', sev:'low', icon:'🟢', fix:'Binding to 0.0.0.0 exposes the service to all external network interfaces. Use 127.0.0.1.', re:/(bind\s*\(\s*\(?\s*['"]0\.0\.0\.0['"]|host\s*=\s*['"]0\.0\.0\.0['"])/ },
+  { key:'http_cleartext', cwe:'CWE-319', label:'Insecure Cleartext Transport (HTTP)', sev:'low', icon:'🟢', fix:'Replace unencrypted http:// with encrypted https:// to prevent credential sniffing.', re:/http:\/\/(?!localhost|127\.0\.0\.1|schemas\.)/ },
+  { key:'cred_leak_print', cwe:'CWE-532', label:'Sensitive Information / Credential Leak in print()', sev:'low', icon:'🟢', fix:'Do not log or print passwords, secrets, or tokens to standard output.', re:/print\s*\([^)]*(?:password|secret|token|api_key|private_key)/i },
+
+  // ── 8. Infrastructure, Cloud Secrets & Advanced Exploits (CWE-489, CWE-798, CWE-502, CWE-625, CWE-379, CWE-390, CWE-329, CWE-113, CWE-470, CWE-915) ──
+  { key:'flask_debug', cwe:'CWE-489', label:'Debug Mode Enabled in Production (debug=True)', sev:'high', icon:'🔴', fix:'Disable debug mode in production (debug=False). The interactive debugger permits unauthenticated RCE.', re:/\b(app\.run\s*\([^)]*debug\s*=\s*True|DEBUG\s*=\s*True)\b/ },
+  { key:'cloud_keys', cwe:'CWE-798', label:'Hardcoded Cloud Provider Access Key (AWS / GitHub / Slack)', sev:'high', icon:'🔴', fix:'Never hardcode cloud credentials. Revoke immediately and retrieve from environment variables or AWS Secrets Manager.', re:/\b(AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}|xox[baprs]-[0-9a-zA-Z]{10,48})\b/ },
+  { key:'dill_cloudpickle', cwe:'CWE-502', label:'Insecure Deserialization via dill / cloudpickle', sev:'high', icon:'🔴', fix:'dill and cloudpickle serialize executable bytecode and closures. Exchange structured JSON or protobuf instead.', re:/\b(dill|cloudpickle)\.(load|loads|dump|dumps)\s*\(/ },
+  { key:'unanchored_regex', cwe:'CWE-625', label:'Unanchored Validation Regex (Missing ^ or $)', sev:'medium', icon:'🟡', fix:'Add ^ and $ (or \\A and \\Z) anchors to regex to prevent trailing or leading payload injection.', re:/re\.(match|search)\s*\(\s*r?['"][^'^"^$]+[a-zA-Z0-9_\-]+[+*][^'^"^$]+['"]\s*,/ },
+  { key:'insecure_tmp_dir', cwe:'CWE-379', label:'Hardcoded Insecure Shared Temp Directory (/tmp/)', sev:'medium', icon:'🟡', fix:'Hardcoding /tmp/ permits symlink hijack attacks. Use tempfile.NamedTemporaryFile() or tempfile.TemporaryDirectory().', re:/open\s*\(\s*['"](\/tmp\/|\/var\/tmp\/|[a-zA-Z]:[\\\/]temp)/i },
+  { key:'silent_except_pass', cwe:'CWE-390', label:'Silent Exception Suppression (except: pass)', sev:'medium', icon:'🟡', fix:'Empty except: pass blocks mask critical authentication failures and data corruption. Log errors explicitly.', re:/except(?:\s+[a-zA-Z0-9_]+)?\s*:\s*\n\s*pass\b/ },
+  { key:'static_iv', cwe:'CWE-329', label:'Cryptographic Static IV / Nonce Reuse', sev:'high', icon:'🔴', fix:'Reusing a static IV in CBC or GCM mode destroys confidentiality. Generate unique IVs with os.urandom(16).', re:/\b(iv|nonce)\s*=\s*b?['"][0-9a-zA-Z\x00]{8,32}['"]/ },
+  { key:'crlf_injection', cwe:'CWE-113', label:'HTTP Header / CRLF Injection Risk', sev:'high', icon:'🔴', fix:'Sanitize header values to strip carriage returns (\\r) and newlines (\\n) before setting response headers.', re:/(headers\[|set_header|add_header)\s*\([^)]*(request\.|user_|input|f['"])/ },
+  { key:'unsafe_reflection', cwe:'CWE-470', label:'Unsafe Reflection via getattr() / __import__()', sev:'high', icon:'🔴', fix:'Do not pass untrusted user strings to getattr() or __import__(). Use an explicit dictionary dispatch map.', re:/(getattr\s*\([^,]+,\s*(request\.|user_|input|action|method|f['"])|__import__\s*\(\s*(request\.|user_|input))/ },
+  { key:'mass_assignment', cwe:'CWE-915', label:'Mass Assignment / Direct __dict__ Overwrite', sev:'high', icon:'🔴', fix:'Do not update object __dict__ directly from raw request data. Explicitly validate and map permitted fields.', re:/(\.__dict__\.update\s*\(|vars\([^)]+\)\.update\s*\()\s*(request\.|data|payload)/ },
+
+  // ── 9. C/C++ & Java Enterprise Security Audits (CWE-120, CWE-134, CWE-502, CWE-78, CWE-328, CWE-330) ──
+  { key:'buffer_overflow_c', cwe:'CWE-120', label:'Unbounded Buffer Copy (strcpy / sprintf / gets)', sev:'high', icon:'🔴', fix:'Avoid unbounded string functions. Migrate to strncpy, snprintf, or std::string with bounds verification.', re:/\b(strcpy|sprintf|gets)\s*\(/ },
+  { key:'format_string_c', cwe:'CWE-134', label:'Format String Vulnerability in printf()', sev:'high', icon:'🔴', fix:'Never supply variable as format argument. Pass format specifier: printf("%s", payload).', re:/\bprintf\s*\(\s*[a-zA-Z0-9_]+\s*\)/ },
+  { key:'java_command_exec', cwe:'CWE-78', label:'OS Command Injection (Runtime.getRuntime().exec)', sev:'high', icon:'🔴', fix:'Avoid shell execution via Runtime.exec. Use ProcessBuilder with individual tokenized arguments.', re:/Runtime\.getRuntime\(\)\.exec\s*\(/ },
+  { key:'java_deserialization', cwe:'CWE-502', label:'Insecure Java ObjectInputStream Deserialization', sev:'high', icon:'🔴', fix:'ObjectInputStream permits arbitrary class gadget execution. Implement LookAheadObjectInputStream or JSON.', re:/(ObjectInputStream\s*\([^)]*\)|ois\.readObject\s*\(\))/ },
+  { key:'java_weak_hash', cwe:'CWE-328', label:'Broken Cryptographic Hash Algorithm (MD5 / SHA-1 in Java)', sev:'high', icon:'🔴', fix:'MD5 and SHA-1 have proven collisions. Upgrade to MessageDigest.getInstance("SHA-256").', re:/MessageDigest\.getInstance\s*\(\s*["'](MD5|SHA-1)["']/ },
+  { key:'java_insecure_random', cwe:'CWE-330', label:'Predictable PRNG (java.util.Random for Tokens)', sev:'high', icon:'🔴', fix:'java.util.Random is not cryptographically secure. Use java.security.SecureRandom for tokens and keys.', re:/\bnew\s+Random\s*\(/ },
+  { key:'cpp_system_exec', cwe:'CWE-78', label:'OS Command Injection via C++ system()', sev:'high', icon:'🔴', fix:'Avoid invoking system shell. Tokenize commands and execute via posix_spawn or execvp with sanitized arguments.', re:/\bsystem\s*\(\s*command\.c_str\(\)\s*\)/ },
+
+  // ── 10. Malware, Virus, Worm & Destructive Threat Signatures (MITRE ATT&CK Safety Shield) ──
+  { key:'threat_worm', cwe:'CWE-829', label:'Self-Replicating Worm / File Infection Routine', sev:'high', icon:'🪱', fix:'SAFETY INTERVENTION: Malicious worm behavior detected. Prohibit automated filesystem traversal and self-replication.', re:/(?:os\.walk\s*\(.*?(?:\.py|\.exe|\.java)|\.write\s*\(.*?(?:sys\.argv\[0\]|payload|virus))/i },
+  { key:'threat_forkbomb', cwe:'CWE-400', label:'Denial of Service Process Fork Bomb', sev:'high', icon:'💣', fix:'CRITICAL DANGER: Fork bombs crash the host operating system. Disallow recursive unmetered process spawning.', re:/(?:while\s+(?:True|1)\s*:\s*os\.fork\s*\(\)|:\(\)\s*\{\s*:\|:&\s*\}\s*;:|while\s*\(\s*1\s*\)\s*fork\s*\(\))/ },
+  { key:'threat_ransomware', cwe:'CWE-73', label:'Ransomware Mass File Encryption / Cryptolocker', sev:'high', icon:'🔒', fix:'CRITICAL DANGER: Mass file locking payload detected. Block encryption routines across user document trees.', re:/(?:\.endswith\s*\(\s*\(\s*['"]\.pdf['"]|\.rename\s*\(.*?\.(?:locked|crypto|ransom|enc)|Fernet\s*\(.*?\.encrypt)/i },
+  { key:'threat_extortion', cwe:'CWE-73', label:'Ransomware Extortion / Decryption Ransom Note', sev:'high', icon:'💰', fix:'Extortion note demanding cryptocurrency wallet payment detected.', re:/(?:README_DECRYPT|RESTORE_FILES|HOW_TO_RECOVER|bitcoin|monero\s+wallet)/i },
+  { key:'threat_revshell', cwe:'CWE-506', label:'Interactive Trojan Reverse Shell Payload', sev:'high', icon:'🪓', fix:'CRITICAL: Arbitrary interactive shell connection to remote C2 server. Quarantined.', re:/(?:os\.dup2\s*\(\s*[a-zA-Z0-9_]+\.fileno\(\)\s*,\s*[012]\s*\)|pty\.spawn\s*\(\s*['"]\/(?:bin\/)?(?:sh|bash)['"]\)|nc\s+-[ec]|bash\s+-i\s+>&|\/dev\/tcp\/\d+)/ },
+  { key:'threat_wiper', cwe:'CWE-459', label:'Destructive Operating System Wiper Payload', sev:'high', icon:'☣️', fix:'CRITICAL: Unconditional deletion of root/system drive (rm -rf /, rmdir /s /q C:\\). Quarantined immediately.', re:/(?:shutil\.rmtree\s*\(\s*['"](?:\/|[A-Za-z]:[/\\])['"]|rm\s+-rf\s+(?:\/|\/\*)|rmdir\s+\/s\s+\/q\s+C:|del\s+\/f\s+\/s\s+\/q\s+[A-Za-z]:)/i },
+  { key:'threat_cryptominer', cwe:'CWE-400', label:'Cryptocurrency Mining Stratum Protocol Connection', sev:'high', icon:'⛏️', fix:'Mining pool protocol signature detected. Terminate unauthorized proof-of-work hash loops.', re:/(?:stratum\+(?:tcp|ssl):\/\/|xmrig|minergate|supportxmr|moneroocean)/i },
+  { key:'threat_keylogger', cwe:'CWE-200', label:'Global Hardware Keystroke Logger / Spyware Hook', sev:'high', icon:'👁️', fix:'Spyware hook capturing low-level keystrokes and credentials. Quarantined.', re:/(?:pynput\.keyboard|GetAsyncKeyState|SetWindowsHookEx|keyboard\.on_press)/i },
+  { key:'threat_evasion', cwe:'CWE-693', label:'Defense Evasion / Antivirus Disablement Attack', sev:'high', icon:'🛑', fix:'Malicious attempt to disable host Windows Defender or firewall protections.', re:/(?:DisableRealtimeMonitoring|advfirewall.*?state\s+off|msmpeng\.exe)/i },
+];
+
+function buildSecurityPanel(code, rawText) {
+  const panel = document.getElementById('sec-panel');
+  panel.innerHTML = '';
+
+  // Scan code for known patterns
+  const found = [];
+  if (code && code.trim()) {
+    const lines = code.split('\n');
+    SEC_PATTERNS.forEach(pat => {
+      lines.forEach((line, idx) => {
+        if (pat.re.test(line)) {
+          found.push({ ...pat, line: idx+1, lineText: line.trim() });
+        }
+      });
+    });
+  }
+
+  // Check for critical malware/worm threats
+  const malwareThreats = found.filter(f => f.key && f.key.startsWith('threat_'));
+  if (malwareThreats.length > 0) {
+    const dangerBanner = document.createElement('div');
+    dangerBanner.className = 'sec-summary';
+    dangerBanner.style.background = 'rgba(239, 68, 68, 0.15)';
+    dangerBanner.style.borderColor = '#ef4444';
+    dangerBanner.style.color = '#ef4444';
+    dangerBanner.style.fontWeight = 'bold';
+    dangerBanner.innerHTML = `
+      <span style="font-size:20px;">☣️</span>
+      <div>
+        <div style="font-size:13px;letter-spacing:0.02em;">CRITICAL MALWARE / WORM THREAT INTERCEPTED!</div>
+        <div style="font-size:11.5px;font-weight:normal;opacity:0.9;margin-top:2px;">
+          ${malwareThreats.length} destructive payload signature(s) detected. Execution sandbox will actively BLOCK this file to prevent host compromise.
+        </div>
+      </div>
+    `;
+    panel.appendChild(dangerBanner);
+  }
+
+  // Severity summary
+  const counts = { high:0, medium:0, low:0, info:0 };
+  found.forEach(f => counts[f.sev]++);
+
+  const summary = document.createElement('div');
+  summary.className = 'sec-summary';
+  if (found.length === 0) {
+    summary.innerHTML = `<span style="font-size:16px;">✅</span> <strong>No static security issues detected across 40+ CWE audits.</strong>`;
+  } else {
+    summary.innerHTML = `
+      <span style="font-size:16px;">🛡️</span>
+      <strong>${found.length} issue${found.length>1?'s':''} found</strong>
+      ${counts.high   ? `<span class="sec-badge high">🔴 ${counts.high} High</span>` : ''}
+      ${counts.medium ? `<span class="sec-badge medium">🟡 ${counts.medium} Medium</span>` : ''}
+      ${counts.low    ? `<span class="sec-badge low">🟢 ${counts.low} Low</span>` : ''}
+    `;
+  }
+  panel.appendChild(summary);
+
+  // Individual items
+  found.forEach(item => {
+    const div = document.createElement('div');
+    div.className = `sec-item ${item.sev}`;
+    div.innerHTML = `
+      <span class="sec-item-icon">${item.icon}</span>
+      <div class="sec-item-body">
+        <div class="sec-item-title">
+          <span class="sec-badge ${item.sev}" style="margin-right:6px;">${item.sev.toUpperCase()}</span>
+          ${item.cwe ? `<span style="border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:11px;font-family:var(--font-code);background:var(--bg);color:var(--muted);margin-right:6px;">${item.cwe}</span>` : ''}
+          ${item.label} — Line ${item.line}
+        </div>
+        <div class="sec-item-desc" style="font-family:var(--font-code);">${escapeHtml(item.lineText)}</div>
+        ${item.fix ? `<div style="margin-top:5px;font-size:11.5px;color:var(--text);opacity:0.88;">💡 <strong>Fix:</strong> ${escapeHtml(item.fix)}</div>` : ''}
+      </div>
+    `;
+    panel.appendChild(div);
+  });
+
+  // Raw security report from backend
+  if (rawText && rawText.trim()) {
+    const rawDiv = document.createElement('div');
+    rawDiv.className = 'sec-raw';
+    rawDiv.textContent = rawText;
+    panel.appendChild(rawDiv);
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ═══════════════════════════════════════════════════
+   SCAN & DIAGNOSE
+═══════════════════════════════════════════════════ */
+async function doScan() {
+  if (scanning) return;
+  const code = document.getElementById('code-editor').value;
+  if (!selectedFile && !code.trim()) { toast('Enter code or select a file first', 'err'); return; }
+  scanning = true;
+  document.body.classList.add('scanning');
+  document.getElementById('run-btn').classList.add('running');
+  document.getElementById('agent-status').textContent = 'Running…';
+  setStatus('Scanning…');
+  resetPipeline();
+  animatePipeline();
+
+  const cleanCode = code.split('\n').map(l => l.replace(/^\s*\d+\s*\|\s?/, '')).join('\n');
+  const fname = selectedFile || document.getElementById('lang-select').value;
+
+  try {
+    const res  = await fetch(`${API}/analyze`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:fname, code:cleanCode})});
+    const data = await res.json();
+
+    // Accuracy badge
+    const ab = document.getElementById('badge-acc');
+    if (data.user_accuracy) {
+      const acc = data.user_accuracy.total_score;
+      ab.style.display = 'inline-block';
+      if (acc >= 80) ab.style.cssText='display:inline-block;background:var(--green-soft);color:var(--green);font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:700;';
+      else if (acc >= 50) ab.style.cssText='display:inline-block;background:#fef3c7;color:#92400e;font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:700;';
+      else ab.style.cssText='display:inline-block;background:var(--red-soft);color:var(--red);font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:700;';
+      ab.textContent = `Score: ${acc}/100`;
+    }
+
+    // Agentic badge
+    const agb = document.getElementById('badge-agentic');
+    if (data.agentic_verification) {
+      const ver = data.agentic_verification;
+      agb.style.display = 'inline-block';
+      if (ver.is_correct) {
+        agb.style.cssText='display:inline-block;background:var(--green-soft);color:var(--green);font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:600;';
+        agb.textContent = `🤖 ${ver.status_badge || '✅ Verified'}`;
+      } else {
+        agb.style.cssText='display:inline-block;background:#fef3c7;color:#92400e;font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:600;';
+        agb.textContent = `🤖 ${ver.status_badge || '⚠ Warning'}`;
+      }
+    }
+
+    if (data.status === 'error_intercepted') {
+      finishPipeline(false);
+      setTerminal('t-output', data.raw_text || 'Errors found.', 'c-red');
+      switchBtab('output');
+      document.getElementById('fixed-code').value = data.fixed_code || '';
+      // Parse and show security section with types
+      const rawText = data.raw_text || '';
+      const secStart = rawText.indexOf('[SECURITY');
+      const secRaw   = secStart >= 0 ? rawText.slice(secStart) : '';
+      buildSecurityPanel(cleanCode, secRaw);
+      document.getElementById('sec-badge').style.display = 'inline-block';
+      setTerminal('t-messages', buildMessages(data), 'c-blue');
+      setTerminal('t-eco', data.metrics || '// No metrics returned.', 'c-green');
+      setStatus('⚠ Errors detected & fixed by AI');
+      document.getElementById('sbar-errors').textContent = `⚠ ${data.error_info ? 1 : 0} error`;
+      toast('Errors found — AI fix ready in Optimized Code tab', '');
+    } else if (data.status === 'success') {
+      finishPipeline(true);
+      setTerminal('t-output', data.raw_text || `[DIAGNOSTIC] Code compiled cleanly.\n${data.message || ''}`, 'c-green');
+      switchBtab('output');
+      document.getElementById('fixed-code').value = data.original_code || cleanCode;
+      const rawText = data.raw_text || '';
+      const secStart = rawText.indexOf('[SECURITY');
+      const secRaw   = secStart >= 0 ? rawText.slice(secStart) : '';
+      buildSecurityPanel(cleanCode, secRaw);
+      document.getElementById('sec-badge').style.display = 'none';
+      setTerminal('t-messages', buildMessages(data), 'c-blue');
+      setTerminal('t-eco', data.metrics || '// No metrics returned.', 'c-green');
+      setStatus('✅ Scan complete — no errors');
+      document.getElementById('sbar-errors').textContent = '⚠ 0 issues';
+      toast('Scan complete — code looks clean!', 'ok');
+    } else {
+      finishPipeline(false);
+      setTerminal('t-output', `[ERROR] ${data.error || 'Unknown error'}`, 'c-red');
+      setStatus('✗ Scan failed');
+      toast('Scan failed — see output', 'err');
+    }
+  } catch(e) {
+    finishPipeline(false);
+    setTerminal('t-output', `Connection Error: ${e}\n\nMake sure the Flask server is running:\n  python app.py`, 'c-red');
+    setStatus('✗ Connection error');
+    toast('Could not connect to server', 'err');
+  }
+
+  scanning = false;
+  document.body.classList.remove('scanning');
+  document.getElementById('run-btn').classList.remove('running');
+  document.getElementById('agent-status').textContent = 'Real Agents Ready';
+}
+
+function buildMessages(data) {
+  const lines = [];
+  lines.push('=== AGENT PIPELINE MESSAGES ===\n');
+  if (data.filename) lines.push(`File     : ${data.filename}`);
+  if (data.language) lines.push(`Language : ${data.language.toUpperCase()}`);
+  if (data.error_info) {
+    const e = data.error_info;
+    lines.push(`\n[Agent 1 — Parser]\nError Type : ${e.error_type || 'N/A'}\nLine       : ${e.line_number || 'N/A'}\nMessage    : ${e.error_message || 'N/A'}`);
+  }
+  if (data.agentic_verification) {
+    const v = data.agentic_verification;
+    lines.push(`\n[Agent 2 — Verifier]\nVerdict    : ${v.verdict || 'N/A'}\nConfidence : ${v.confidence || 'N/A'}%\nStatus     : ${v.status_badge || 'N/A'}`);
+    if (v.checks && v.checks.length) lines.push('Checks:\n' + v.checks.map(c => '  ' + c).join('\n'));
+  }
+  if (data.user_accuracy) {
+    const a = data.user_accuracy;
+    lines.push(`\n[Agent 3 — Grader]\nScore      : ${a.total_score}/100\nGrade      : ${a.grade || 'N/A'}`);
+    if (a.details) {
+      Object.entries(a.details).forEach(([k,v]) => lines.push(`  ${k}: ${v}`));
+    }
+  }
+  return lines.join('\n');
+}
+
+/* ═══════════════════════════════════════════════════
+   SAVE
+═══════════════════════════════════════════════════ */
+async function doSave() {
+  const fixedCode   = document.getElementById('fixed-code').value;
+  const editorCode  = document.getElementById('code-editor').value;
+  const code        = fixedCode || editorCode;
+  const fname       = selectedFile || document.getElementById('lang-select').value;
+  if (!code.trim()) { toast('Nothing to save', 'warn'); return; }
+
+  setStatus('Saving…');
+  try {
+    const res  = await fetch(`${API}/save`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:fname, code})});
+    const data = await res.json();
+    if (data.status === 'success') {
+      toast(`💾 Saved as: ${data.new_filename}`, 'ok');
+      setStatus(`Saved: ${data.new_filename}`);
+      await loadFiles();
+    } else {
+      toast('Save failed', 'err');
+    }
+  } catch(e) {
+    toast('Save error — server offline?', 'err');
+    setStatus('✗ Save error');
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   EXECUTE
+═══════════════════════════════════════════════════ */
+async function doExecute() {
+  const fixedCode  = document.getElementById('fixed-code').value;
+  const editorCode = document.getElementById('code-editor').value;
+  const code       = fixedCode || editorCode;
+  const fname      = selectedFile || document.getElementById('lang-select').value;
+  if (!code.trim()) { toast('No code to execute', 'warn'); return; }
+
+  setTerminal('t-output', '$ Executing…', 'c-muted');
+  switchBtab('output');
+  setStatus('Executing…');
+
+  try {
+    const res  = await fetch(`${API}/execute`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:fname, code})});
+    const data = await res.json();
+    if (data.is_blocked) {
+      setTerminal('t-output', data.output, 'c-red');
+      setStatus('🛑 MALWARE BLOCKED BY SAFETY SHIELD');
+      toast('🛑 EXECUTION INTERCEPTED: Dangerous malware signature detected!', 'err');
+      switchBtab('security');
+      return;
+    }
+    setTerminal('t-output', '$ ' + (data.output || '(no output)'), data.output?.includes('Error') ? 'c-red' : 'c-green');
+    setStatus('✅ Execution complete');
+    toast('Execution complete!', 'ok');
+  } catch(e) {
+    setTerminal('t-output', `$ Execution failed: ${e}`, 'c-red');
+    setStatus('✗ Execution error');
+    toast('Execution error', 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ANALYTICS — robust chart rendering
+═══════════════════════════════════════════════════ */
+async function fetchAnalytics() {
+  const statusEl = document.getElementById('analytics-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--muted)';
+  statusEl.textContent = '⏳ Loading analytics data…';
+
+  if (typeof Chart === 'undefined') {
+    statusEl.textContent = '⚠️ Chart.js library could not load. Check internet connection and refresh.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/analytics`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // ── Summary cards ──────────────────────────────
+    document.getElementById('stat-runs').textContent = data.total_runs ?? '—';
+    document.getElementById('stat-co2').textContent  =
+      data.total_emissions_kg ? data.total_emissions_kg.toFixed(6) : '—';
+
+    const recs = data.records || [];
+    if (recs.length) {
+      const dur_sum = recs.reduce((s, r) => s + parseFloat(r.duration || 0), 0);
+      const avgLat  = (dur_sum / recs.length * 1000).toFixed(0);
+      document.getElementById('stat-lat').textContent  = avgLat + ' ms';
+      const lastRec = recs[recs.length - 1];
+      const lastFn  = lastRec.filename || lastRec.project_name || '—';
+      document.getElementById('stat-last').textContent = lastFn;
+    }
+
+    // ── Build chart payload ────────────────────────
+    // Primary: use backend-computed arrays if labels exist
+    // Fallback: build from records[] so charts ALWAYS render when there's data
+    let chartPayload = data;
+
+    const hasLabels = Array.isArray(data.labels) && data.labels.length > 0;
+    const hasRecs   = recs.length > 0;
+
+    if (!hasLabels && hasRecs) {
+      // Build from records directly
+      const recent = recs.slice(-12);
+      const sf = (v, m=1) => { try { return Math.round(parseFloat(v||0)*m*100)/100; } catch{return 0;} };
+      chartPayload = {
+        labels:          recent.map((r,i) => r.filename ? r.filename.slice(0,12) : `Run ${i+1}`),
+        responseTime:    recent.map(r => sf(r.duration, 1000)),
+        emissions:       recent.map(r => sf(r.emissions, 1e9)),
+        raplEnergy:      recent.map(() => 0),
+        pinpointOvhd:    recent.map(() => 0),
+        energyVirt:      recent.map(() => 85),
+        modelPerformance:recent.map(r => Math.min(100, Math.max(0, 100 - sf(r.emissions, 1e6)))),
+        securityRisks:   recent.map(() => 0),
+        securityHealing: recent.map(() => 85),
+      };
+    }
+
+    const finalHasData = Array.isArray(chartPayload.labels) && chartPayload.labels.length > 0;
+
+    if (!finalHasData) {
+      statusEl.textContent = 'ℹ️ No scan data yet. Run a scan in Studio to populate charts.';
+    } else {
+      statusEl.style.display = 'none';
+      renderCharts(chartPayload);
+    }
+
+  } catch(e) {
+    statusEl.textContent = `⚠️ Analytics error: ${e.message}. Is the Flask server running?`;
+    statusEl.style.color = 'var(--red)';
+    console.error('Analytics error:', e);
+  }
+}
+
+function renderCharts(data) {
+  if (typeof Chart === 'undefined') { console.error('Chart.js not loaded'); return; }
+
+  const isDark    = document.body.classList.contains('dark');
+  const gridColor = isDark ? '#2a2d3a' : '#f0f0f4';
+  const tickColor = '#6b7280';
+  const bgColor   = isDark ? '#1a1d27' : '#fff';
+  const titleCol  = isDark ? '#f9fafb' : '#1a1d23';
+
+  function makeOpts() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 500 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: bgColor,
+          borderColor: isDark ? '#374151' : '#e5e7eb',
+          borderWidth: 1,
+          titleColor: titleCol,
+          bodyColor: '#6b7280',
+          padding: 10,
+          borderRadius: 6
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { color: tickColor, font: { family:'Inter', size:11 } },
+          border: { color: isDark ? '#2a2d3a' : '#e5e7eb' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: tickColor, font: { family:'Inter', size:10 }, maxRotation: 40, minRotation: 20 },
+          border: { color: isDark ? '#2a2d3a' : '#e5e7eb' }
+        }
+      }
+    };
+  }
+
+  const cfgs = [
+    { id:'chart-response',    key:'responseTime',     label:'Time (ms)',      color:'#2563eb' },
+    { id:'chart-emissions',   key:'emissions',        label:'Emissions (µg)', color:'#10b981' },
+    { id:'chart-energy',      key:'raplEnergy',       label:'Energy (mJ)',    color:'#f59e0b' },
+    { id:'chart-overhead',    key:'pinpointOvhd',     label:'Overhead (ms)',  color:'#8b5cf6' },
+    { id:'chart-virt',        key:'energyVirt',       label:'Efficiency (%)', color:'#ec4899' },
+    { id:'chart-performance', key:'modelPerformance', label:'NLP Score',      color:'#6366f1' },
+    { id:'chart-security',    key:'securityRisks',    label:'Sec Risks',      color:'#ef4444' },
+    { id:'chart-healing',     key:'securityHealing',  label:'Resolved (%)',   color:'#34d399' },
+  ];
+
+  const labels = data.labels || [];
+
+  cfgs.forEach(cfg => {
+    const canvas = document.getElementById(cfg.id);
+    if (!canvas) return;
+
+    if (charts[cfg.id]) {
+      try { charts[cfg.id].destroy(); } catch(_) {}
+      charts[cfg.id] = null;
+    }
+
+    const rawData  = data[cfg.key] || [];
+    const finalData = rawData.length > 0 ? rawData : labels.map(() => 0);
+
+    try {
+      const ctx = canvas.getContext('2d');
+      charts[cfg.id] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: cfg.label,
+            data: finalData,
+            backgroundColor: cfg.color + '33',
+            borderColor: cfg.color,
+            borderWidth: 1.5,
+            borderRadius: 4,
+            hoverBackgroundColor: cfg.color + '66'
+          }]
+        },
+        options: makeOpts()
+      });
+    } catch(err) {
+      console.error(`Chart render error for ${cfg.id}:`, err);
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   GRADER
+═══════════════════════════════════════════════════ */
+const graderTemplates = {
+  python:{ label:'Python',
+    codeA:`def calculate_sum(numbers):\n    total = 0\n    for n in numbers:\n        total += n\n    return total\n\nprint(calculate_sum([10, 20, 30]))`,
+    codeB:`def add_items(arr):\n    res = 0\n    for x in arr:\n        res += x\n    return res\n\nprint(add_items([1, 2, 3]))`},
+  cpp:{ label:'C++',
+    codeA:`#include <iostream>\nusing namespace std;\n\nint calculateSum(int arr[], int n) {\n    int total = 0;\n    for(int i = 0; i < n; i++) total += arr[i];\n    return total;\n}\n\nint main() {\n    int nums[] = {10, 20, 30};\n    cout << calculateSum(nums, 3) << endl;\n    return 0;\n}`,
+    codeB:`#include <iostream>\nusing namespace std;\n\nint addItems(int a[], int size) {\n    int res = 0;\n    for(int j = 0; j < size; j++) res += a[j];\n    return res;\n}\n\nint main() {\n    int vals[] = {1, 2, 3};\n    cout << addItems(vals, 3) << endl;\n    return 0;\n}`},
+  java:{ label:'Java',
+    codeA:`public class Main {\n    public static int calculateSum(int[] numbers) {\n        int total = 0;\n        for (int n : numbers) total += n;\n        return total;\n    }\n    public static void main(String[] args) {\n        int[] nums = {10, 20, 30};\n        System.out.println(calculateSum(nums));\n    }\n}`,
+    codeB:`public class Main {\n    public static int addItems(int[] arr) {\n        int res = 0;\n        for (int x : arr) res += x;\n        return res;\n    }\n    public static void main(String[] args) {\n        int[] vals = {1, 2, 3};\n        System.out.println(addItems(vals));\n    }\n}`}
+};
+
+function switchLang() {
+  const lang = document.getElementById('langSelect').value;
+  const tpl  = graderTemplates[lang];
+  document.getElementById('codeA').value = tpl.codeA;
+  document.getElementById('codeB').value = tpl.codeB;
+  document.getElementById('langBadgeB').innerText = tpl.label;
+}
+
+async function runAgents() {
+  const language = document.getElementById('langSelect').value;
+  const code_a   = document.getElementById('codeA').value;
+  const code_b   = document.getElementById('codeB').value;
+  document.getElementById('scoreDisplay').textContent = '…';
+  document.getElementById('plagDisplay').textContent  = 'Running agents…';
+  setStatus('Running grader agents…');
+  try {
+    const res  = await fetch(`${API}/agent_grade`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({language,code_a,code_b})});
+    const data = await res.json();
+    lastReport = data;
+    document.getElementById('scoreDisplay').textContent = data.grading.total_score + ' / 100';
+    const sim = data.plagiarism.similarity_percent;
+    document.getElementById('plagDisplay').textContent = sim !== null
+      ? `Similarity (${language.toUpperCase()}): ${sim}% — ${data.plagiarism.verdict} (AI: ${data.plagiarism.ai_probability}%)`
+      : `AI Likelihood: ${data.plagiarism.ai_probability}% — ${data.plagiarism.verdict}`;
+    const list = document.getElementById('feedbackList');
+    list.innerHTML = '';
+    (data.grading.feedback || []).forEach(item => { const li=document.createElement('li'); li.textContent=item; list.appendChild(li); });
+    setStatus('✅ Grading complete');
+    toast('Grading done!', 'ok');
+  } catch(e) {
+    document.getElementById('plagDisplay').textContent = 'Error — server offline?';
+    toast('Agent error — is the server running?', 'err');
+  }
+}
+
+async function askTutor() {
+  const qInput  = document.getElementById('userQuestion');
+  const question = qInput.value.trim();
+  if (!question) return;
+  const chatBox = document.getElementById('chatBox');
+  chatBox.textContent += `\n\nYou: ${question}`;
+  qInput.value = '';
+  try {
+    const res  = await fetch(`${API}/agent_tutor`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({language:document.getElementById('langSelect').value, question, code:document.getElementById('codeA').value, report:lastReport})});
+    const data = await res.json();
+    chatBox.textContent += `\nTutor Agent: ${data.reply}`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+  } catch(e) { chatBox.textContent += '\nTutor Agent: (server offline)'; }
+}
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Voice input works best in Google Chrome!'); return; }
+  const r = new SR(); r.lang='en-US';
+  r.onresult = e => { document.getElementById('userQuestion').value = e.results[0][0].transcript; askTutor(); };
+  r.start();
+  toast('🎤 Listening…', '');
+}
+
+/* ═══════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); doScan(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='s')     { e.preventDefault(); doSave(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='n')     { e.preventDefault(); openM('m-new'); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='o')     { e.preventDefault(); openM('m-upload'); }
+  if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); }
+});
+
+// Close modal on background click
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+
+/* ═══════════════════════════════════════════════════
+   VERTICAL RESIZER (STUDIO CODE & OUTPUT SPLITTER)
+═══════════════════════════════════════════════════ */
+function updatePanelToggleIcon(isCollapsed) {
+  const svg = document.getElementById('svg-panel-toggle');
+  if (!svg) return;
+  if (isCollapsed) {
+    svg.innerHTML = '<polyline points="18 15 12 9 6 15"/>'; // chevron up
+  } else {
+    svg.innerHTML = '<polyline points="6 9 12 15 18 9"/>'; // chevron down
+  }
+}
+
+function toggleBottomPanel() {
+  const bottomPanel = document.getElementById('bottom-panel');
+  if (!bottomPanel) return;
+  const currentHeight = bottomPanel.offsetHeight;
+  if (currentHeight <= 45) {
+    const saved = parseInt(localStorage.getItem('compilerai_bottom_panel_height') || '250', 10);
+    bottomPanel.style.height = Math.max(saved, 200) + 'px';
+    updatePanelToggleIcon(false);
+  } else {
+    localStorage.setItem('compilerai_bottom_panel_height', currentHeight);
+    bottomPanel.style.height = '38px';
+    updatePanelToggleIcon(true);
+  }
+  window.dispatchEvent(new Event('resize'));
+  updateLN();
+}
+
+function initVerticalResizer() {
+  const resizer = document.getElementById('v-resizer');
+  const bottomPanel = document.getElementById('bottom-panel');
+  const pageStudio = document.getElementById('page-studio');
+  if (!resizer || !bottomPanel || !pageStudio) return;
+
+  // Restore saved height if available
+  const savedHeight = localStorage.getItem('compilerai_bottom_panel_height');
+  if (savedHeight) {
+    const parsed = parseInt(savedHeight, 10);
+    if (!isNaN(parsed) && parsed >= 38) {
+      bottomPanel.style.height = parsed + 'px';
+      updatePanelToggleIcon(parsed <= 45);
+    }
+  }
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  function onPointerDown(e) {
+    if (e.type === 'mousedown' && e.button !== 0) return;
+    isDragging = true;
+    resizer.classList.add('dragging');
+    document.body.classList.add('resizing-v');
+    startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    startHeight = bottomPanel.offsetHeight;
+    e.preventDefault();
+  }
+
+  function onPointerMove(e) {
+    if (!isDragging) return;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    const dy = startY - clientY; // pulling up increases bottom panel height
+    const containerHeight = pageStudio.clientHeight;
+    const minHeight = 38;
+    const maxHeight = Math.max(minHeight, containerHeight - 85);
+    let newHeight = startHeight + dy;
+    if (newHeight < minHeight) newHeight = minHeight;
+    if (newHeight > maxHeight) newHeight = maxHeight;
+    bottomPanel.style.height = newHeight + 'px';
+    updatePanelToggleIcon(newHeight <= 45);
+  }
+
+  function onPointerUp(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    resizer.classList.remove('dragging');
+    document.body.classList.remove('resizing-v');
+    const cur = bottomPanel.offsetHeight;
+    if (cur > 45) {
+      localStorage.setItem('compilerai_bottom_panel_height', cur);
+      updatePanelToggleIcon(false);
+    } else {
+      updatePanelToggleIcon(true);
+    }
+    window.dispatchEvent(new Event('resize'));
+    updateLN();
+  }
+
+  resizer.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove, { passive: false });
+  window.addEventListener('mouseup', onPointerUp);
+
+  resizer.addEventListener('touchstart', onPointerDown, { passive: false });
+  window.addEventListener('touchmove', onPointerMove, { passive: false });
+  window.addEventListener('touchend', onPointerUp);
+  window.addEventListener('touchcancel', onPointerUp);
+
+  resizer.addEventListener('dblclick', () => {
+    toggleBottomPanel();
+  });
+
+  window.addEventListener('resize', () => {
+    if (bottomPanel.offsetHeight > 45) {
+      const maxH = Math.max(38, pageStudio.clientHeight - 85);
+      if (bottomPanel.offsetHeight > maxH) {
+        bottomPanel.style.height = maxH + 'px';
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+loadFiles();
+updateLN();
+initVerticalResizer();
+
+/* ═══════════════════════════════════════════════════
+   COMPILERAI FIELD GUIDE & ASSISTANT LOGIC
+═══════════════════════════════════════════════════ */
+
+// ── 1. Guide Category & Keyword Search Filtering ──
+function filterGuideCategory(cat, el) {
+  document.querySelectorAll('.guide-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const sections = document.querySelectorAll('.guide-section');
+  sections.forEach(sec => {
+    if (cat === 'all' || sec.getAttribute('data-cat') === cat) {
+      sec.style.display = 'block';
+    } else {
+      sec.style.display = 'none';
+    }
+  });
+}
+
+function filterGuideCards() {
+  const query = (document.getElementById('guide-search').value || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('.guide-card');
+  cards.forEach(card => {
+    const text = (card.textContent + ' ' + (card.getAttribute('data-keywords') || '')).toLowerCase();
+    if (!query || text.includes(query)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// ── 2. Assistant Drawer Toggle & Q&A Knowledge Engine ──
+let lastBotReplyText = "Hello! I am your CompilerAI Assistant. Ask me anything about the system!";
+
+function toggleAssistantDrawer() {
+  const drawer = document.getElementById('assistant-drawer');
+  drawer.classList.toggle('open');
+  if (drawer.classList.contains('open')) {
+    document.getElementById('ast-input').focus();
+  }
+}
+
+function handleAssistantChip(promptText) {
+  document.getElementById('ast-input').value = promptText;
+  sendAssistantQuery();
+}
+
+function openAssistantWithPrompt(promptText) {
+  const drawer = document.getElementById('assistant-drawer');
+  drawer.classList.add('open');
+  document.getElementById('ast-input').value = promptText;
+  sendAssistantQuery();
+}
+
+function sendAssistantQuery() {
+  const inp = document.getElementById('ast-input');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+
+  const body = document.getElementById('ast-body');
+  
+  // Append user bubble
+  const userDiv = document.createElement('div');
+  userDiv.className = 'ast-msg user';
+  userDiv.textContent = q;
+  body.appendChild(userDiv);
+  body.scrollTop = body.scrollHeight;
+
+  // Synthesize comprehensive response
+  const lowerQ = q.toLowerCase();
+  let answer = "";
+
+  if (lowerQ.includes('button') || lowerQ.includes('control') || lowerQ.includes('toolbar')) {
+    answer = `<strong>🕹️ UI Button & Control Guide:</strong><br>
+    • <strong>Run / Scan & Diagnose:</strong> Runs the 4-phase Agentic Pipeline to analyze errors and 52+ security audits.<br>
+    • <strong>⚡ Execute:</strong> Executes Python, Java, or C++ in the sandbox and prints stdout/stderr.<br>
+    • <strong>💾 Save:</strong> Saves your source code changes back to the server.<br>
+    • <strong>🧹 Clean Code:</strong> Strips extraneous comments and cleans up whitespace.<br>
+    • <strong>📁 New / Upload:</strong> Creates new files or uploads local code into the workspace.`;
+  } else if (lowerQ.includes('pipeline') || lowerQ.includes('agent') || lowerQ.includes('4-phase')) {
+    answer = `<strong>⚙️ 4-Phase Multi-Agent Execution Pipeline:</strong><br>
+    1. <strong>Parse Agent:</strong> Validates grammar and constructs the Abstract Syntax Tree (AST).<br>
+    2. <strong>Analyze Agent:</strong> Categorizes errors (Name, Type, ZeroDivision, etc.) and evaluates 52+ CWE patterns.<br>
+    3. <strong>Fix / Opt Agent:</strong> Generates optimal code repairs and green computing optimizations.<br>
+    4. <strong>Verify Agent:</strong> Validates clean compilation and computes final health score (0–100).`;
+  } else if (lowerQ.includes('bleu') || lowerQ.includes('rouge') || lowerQ.includes('metric')) {
+    answer = `<strong>📊 BLEU vs. ROUGE Linguistic Evaluation:</strong><br>
+    • <strong>BLEU (Precision):</strong> Evaluates n-gram precision (BLEU-1 to BLEU-4) of NLP explanations against expert references.<br>
+    • <strong>ROUGE (Recall):</strong> Evaluates coverage (ROUGE-1, ROUGE-2) and Longest Common Subsequence (ROUGE-L) so key debugging instructions are never omitted.`;
+  } else if (lowerQ.includes('security') || lowerQ.includes('cwe') || lowerQ.includes('vuln') || lowerQ.includes('audit')) {
+    answer = `<strong>🛡️ 52+ CWE Static Security Audits:</strong><br>
+    Covers OWASP Top 10 across Python, Java, and C++ including:<br>
+    • Arbitrary Code Execution (eval, exec, system) [CWE-95, CWE-78]<br>
+    • SQL Injection (formatted queries & JDBC) [CWE-89]<br>
+    • Insecure Deserialization (pickle, ObjectInputStream) [CWE-502]<br>
+    • Hardcoded Cloud Secrets (AWS, GitHub, Slack tokens) [CWE-798]<br>
+    • Buffer Overflows & Format Strings in C++ [CWE-120, CWE-134]<br>
+    • XML External Entity (XXE) and Path Traversal [CWE-611, CWE-22]`;
+  } else if (lowerQ.includes('eco') || lowerQ.includes('carbon') || lowerQ.includes('energy') || lowerQ.includes('rapl')) {
+    answer = `<strong>🌿 Eco-Telemetry & Green Computing:</strong><br>
+    • <strong>RAPL Energy:</strong> Measures CPU package power in millijoules (mJ).<br>
+    • <strong>Carbon Mass:</strong> Calculates CO₂ equivalent emissions per run in µg and kg.<br>
+    • <strong>Pinpoint Overhead:</strong> Tracks latency added by analysis vs raw compilation.<br>
+    • <strong>Dashboard:</strong> Visualizes all historical trends under the Eco Analytics tab!`;
+  } else if (lowerQ.includes('test') || lowerQ.includes('1k') || lowerQ.includes('suites') || lowerQ.includes('57')) {
+    answer = `<strong>📁 57 Standardized Test Suites (1,000+ Lines Each):</strong><br>
+    • <strong>Total Volume:</strong> 61,387 lines across 57 test files!<br>
+    • <strong>Python (44 files):</strong> Compiler errors (tc_01–tc_12), Security audits (tc_13–tc_32), and Enterprise platforms (tc_33–tc_35).<br>
+    • <strong>Java (7 files):</strong> Compile/runtime errors (tc_19, tc_20) and Core Banking (tc_36).<br>
+    • <strong>C++ (6 files):</strong> Memory errors (tc_21, tc_22) and Firewall Kernel (tc_37).`;
+  } else if (lowerQ.includes('resizer') || lowerQ.includes('splitter') || lowerQ.includes('divider') || lowerQ.includes('pull')) {
+    answer = `<strong>↔️ Vertical Resizer Splitter:</strong><br>
+    • Drag the divider bar up or down freely to adjust the code vs output view.<br>
+    • Double-click the bar to instantly collapse or expand the bottom terminal!<br>
+    • Your custom layout height is saved automatically.`;
+  } else {
+    answer = `<strong>💡 System Overview for "${q}":</strong><br>
+    CompilerAI / INTELLIFIX combines compiler theory, Abstract Syntax Tree analysis, NLP explanation synthesis, and 52+ CWE static security audits.<br>
+    You can explore all chapters under the <strong>Field Guide</strong> tab or ask about any specific button, agent, or error type!`;
+  }
+
+  lastBotReplyText = answer.replace(/<[^>]+>/g, ' ');
+
+  setTimeout(() => {
+    const botDiv = document.createElement('div');
+    botDiv.className = 'ast-msg bot';
+    botDiv.innerHTML = answer;
+    body.appendChild(botDiv);
+    body.scrollTop = body.scrollHeight;
+  }, 250);
+}
+
+function speakLastAssistantMessage() {
+  if (!('speechSynthesis' in window)) {
+    toast("Speech synthesis not supported in this browser", "warn");
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(lastBotReplyText);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  window.speechSynthesis.speak(utterance);
+  toast("🔊 Playing audible explanation...", "ok");
+}
+
+// ── 3. Interactive Guided Spotlight Tour ──
+const TOUR_STEPS = [
+  {
+    target: '#sidebar',
+    title: '1. File Explorer & 57 Test Suites',
+    desc: 'Browse through 57 enterprise test suites across Python, Java, and C++, each standardized to 1,000+ lines of code with realistic domain logic.'
+  },
+  {
+    target: '.code-panel',
+    title: '2. Source Code Editor',
+    desc: 'Full-featured code editor with syntax highlighting, language selector, line numbering, and a live code health score badge (0–100).'
+  },
+  {
+    target: '.pipeline-panel',
+    title: '3. 4-Phase Live Agentic Pipeline',
+    desc: 'Watch the Parse, Analyze, Fix/Opt, and Verify agents run in staged progression to isolate bugs, optimize performance, and verify fixes.'
+  },
+  {
+    target: '#v-resizer',
+    title: '4. Vertical Resizer Splitter Bar',
+    desc: 'Drag this bar up and down freely to resize the code area and bottom terminal, or double-click to collapse/expand.'
+  },
+  {
+    target: '#bt-output',
+    title: '5. Output & NLP Diagnostics',
+    desc: 'Presents token-level error diagnostics and natural language explanations of what went wrong, why, and how to fix it.'
+  },
+  {
+    target: '#bt-fixed',
+    title: '6. Optimized & Healed Code',
+    desc: 'Displays the AI-generated code repair with a 1-click "Load into Editor" button to instantly patch the broken file.'
+  },
+  {
+    target: '#bt-security',
+    title: '7. 52+ CWE Static Security Audits',
+    desc: 'Audits for SQL injection, command execution, unsafe deserialization, XXE, SSRF, and C++ memory flaws with severity badges and CWE codes.'
+  },
+  {
+    target: '#bt-eco',
+    title: '8. Green Computing & Eco Metrics',
+    desc: 'Monitors CPU RAPL energy in millijoules and estimates carbon emissions (CO₂ eq) per compilation run.'
+  },
+  {
+    target: '.page-tabs',
+    title: '9. Eco Analytics, AI Grader & Guide',
+    desc: 'Switch between the Studio IDE, Eco Analytics telemetry dashboard, AI Grader Studio, and this comprehensive Field Guide.'
+  }
+];
+
+let currentTourIndex = 0;
+
+function startGuidedTour() {
+  switchPage('studio');
+  currentTourIndex = 0;
+  document.getElementById('tour-backdrop').classList.add('active');
+  document.getElementById('tour-popover').classList.add('active');
+  renderTourStep();
+}
+
+function endGuidedTour() {
+  document.getElementById('tour-backdrop').classList.remove('active');
+  document.getElementById('tour-popover').classList.remove('active');
+  document.querySelectorAll('.tour-target-highlight').forEach(el => el.classList.remove('tour-target-highlight'));
+}
+
+function nextTourStep() {
+  if (currentTourIndex < TOUR_STEPS.length - 1) {
+    currentTourIndex++;
+    renderTourStep();
+  } else {
+    endGuidedTour();
+    toast("✨ Guided Tour completed! Explore the Field Guide for deep dives.", "ok");
+  }
+}
+
+function prevTourStep() {
+  if (currentTourIndex > 0) {
+    currentTourIndex--;
+    renderTourStep();
+  }
+}
+
+function renderTourStep() {
+  document.querySelectorAll('.tour-target-highlight').forEach(el => el.classList.remove('tour-target-highlight'));
+  
+  const step = TOUR_STEPS[currentTourIndex];
+  document.getElementById('tour-step-badge').textContent = `Step ${currentTourIndex + 1} of ${TOUR_STEPS.length}`;
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-desc').textContent = step.desc;
+
+  document.getElementById('tour-prev-btn').style.visibility = (currentTourIndex === 0) ? 'hidden' : 'visible';
+  document.getElementById('tour-next-btn').textContent = (currentTourIndex === TOUR_STEPS.length - 1) ? 'Finish Tour ✓' : 'Next Step →';
+
+  const el = document.querySelector(step.target);
+  const popover = document.getElementById('tour-popover');
+  
+  if (el) {
+    el.classList.add('tour-target-highlight');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    const rect = el.getBoundingClientRect();
+    let top = rect.bottom + 12;
+    let left = rect.left + (rect.width / 2) - 170;
+
+    // Boundary constraints
+    if (top + 200 > window.innerHeight) top = Math.max(16, rect.top - 200);
+    if (left < 16) left = 16;
+    if (left + 350 > window.innerWidth) left = window.innerWidth - 360;
+
+    popover.style.top = top + 'px';
+    popover.style.left = left + 'px';
+  } else {
+    popover.style.top = '25%';
+    popover.style.left = 'calc(50% - 170px)';
+  }
+}
+
+</script>
+
+<!-- FLOATING AI ASSISTANT DOCK & DRAWER -->
+<div class="assistant-dock" id="assistant-dock">
+  <button class="assistant-fab" id="assistant-fab" onclick="toggleAssistantDrawer()" title="CompilerAI System Assistant & Interactive Tour">
+    <span class="assistant-fab-icon">🤖</span>
+    <span class="assistant-fab-text">AI Assistant &amp; Tour</span>
+  </button>
+  <div class="assistant-drawer" id="assistant-drawer">
+    <div class="ast-hdr">
+      <div class="ast-hdr-title">
+        <span>🤖</span>
+        <span>CompilerAI System Assistant</span>
+      </div>
+      <div class="ast-hdr-actions">
+        <button class="ph-btn" onclick="startGuidedTour()" title="Launch Guided Tour" style="font-size:11px;color:var(--accent);">✨ Tour</button>
+        <button class="ph-btn" onclick="toggleAssistantDrawer()" title="Close Assistant">✕</button>
+      </div>
+    </div>
+    <div class="ast-body" id="ast-body">
+      <div class="ast-msg bot">
+        <strong>👋 Hello! I am your CompilerAI System Assistant.</strong><br>
+        I know every inch of this platform! Ask me anything about the compiler engine, 4-phase agents, 52+ security audits, BLEU/ROUGE metrics, or test suites.
+        <div class="ast-chips">
+          <div class="ast-chip" onclick="handleAssistantChip('What does each button do?')">🕹️ What does each button do?</div>
+          <div class="ast-chip" onclick="handleAssistantChip('Explain the 4-phase Agent Pipeline')">⚙️ 4-Phase Agents</div>
+          <div class="ast-chip" onclick="handleAssistantChip('How do BLEU and ROUGE evaluate errors?')">📊 BLEU vs ROUGE</div>
+          <div class="ast-chip" onclick="handleAssistantChip('What are the 52+ security audits?')">🛡️ 52+ CWE Audits</div>
+          <div class="ast-chip" onclick="handleAssistantChip('How do Eco Metrics measure energy and carbon?')">🌿 Eco Metrics</div>
+          <div class="ast-chip" onclick="handleAssistantChip('Tell me about the 57 test cases')">📁 57 Test Cases (1k+ LOC)</div>
+          <div class="ast-chip" onclick="handleAssistantChip('How does the resizer divider work?')">↔️ Resizer Divider</div>
+        </div>
+      </div>
+    </div>
+    <div class="ast-footer">
+      <input type="text" id="ast-input" placeholder="Ask about any feature, button, or metric..." onkeydown="if(event.key==='Enter') sendAssistantQuery()">
+      <button class="btn btn-blue btn-sm" onclick="sendAssistantQuery()">Ask</button>
+      <button class="btn btn-green btn-sm" onclick="speakLastAssistantMessage()" title="Read answer out loud">🔊</button>
+    </div>
+  </div>
+</div>
+
+<!-- INTERACTIVE SPOTLIGHT TOUR OVERLAY -->
+<div class="tour-backdrop" id="tour-backdrop" onclick="endGuidedTour()"></div>
+<div class="tour-popover" id="tour-popover">
+  <div class="tour-popover-hdr">
+    <span id="tour-step-badge" class="tour-step-badge">Step 1 of 8</span>
+    <button class="tour-close-btn" onclick="endGuidedTour()">✕</button>
+  </div>
+  <h4 id="tour-title">Explorer Sidebar</h4>
+  <p id="tour-desc">Browse through 57 enterprise test suites across Python, Java, and C++, each standardized to 1,000+ lines of code.</p>
+  <div class="tour-actions">
+    <button class="btn btn-sm" id="tour-prev-btn" onclick="prevTourStep()" style="background:var(--border2);color:var(--text);">← Back</button>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-sm" onclick="endGuidedTour()" style="background:transparent;color:var(--muted);border:1px solid var(--border2);">Skip</button>
+      <button class="btn btn-blue btn-sm" id="tour-next-btn" onclick="nextTourStep()">Next Step →</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

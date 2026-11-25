@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>INTELLIFIX — Agentic Auto-Grader & AI Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 16px; margin-bottom: 24px; }
+    .badge { background: #2563eb; padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card-header h3 { margin: 0; }
+    select.lang-select {
+      background: #0f172a;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    select.lang-select:focus { outline: none; border-color: #2563eb; }
+    textarea { width: 100%; height: 220px; background: #0f172a; color: #38bdf8; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-family: 'Fira Code', monospace; font-size: 0.9rem; box-sizing: border-box; }
+    button { background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #1d4ed8; }
+    .mic-btn { background: #10b981; margin-left: 8px; }
+    .score-big { font-size: 2.5rem; font-weight: 700; color: #10b981; }
+    .chat-box { height: 180px; overflow-y: auto; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px; white-space: pre-line; font-size: 0.9rem; }
+    .chat-input { display: flex; gap: 8px; }
+    input[type="text"] { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <a href="/" style="color:#38bdf8; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px; margin-bottom:10px;">
+        ← Back to Web Studio
+      </a>
+      <h1 style="margin:0;">🤖 INTELLIFIX Agentic Studio</h1>
+      <p style="margin:4px 0 0; color:#94a3b8;">Multi-Agent Plagiarism Detective • Autonomous 100-Mark Grader • Voice/Chat AI Tutor</p>
+    </div>
+    <span class="badge">Agentic AI v2.0</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-header">
+        <h3>📄 Student Submission A (Target Code)</h3>
+        <select id="langSelect" class="lang-select" onchange="switchLanguage()">
+          <option value="python">Python</option>
+          <option value="cpp">C++</option>
+          <option value="java">Java</option>
+        </select>
+      </div>
+      <textarea id="codeA" placeholder="Write or paste Python, C++, or Java code to grade & analyze...">def calculate_sum(numbers):
+    total = 0
+    for n in numbers:
+        total += n
+    return total
+
+print(calculate_sum([10, 20, 30]))</textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🕵️ Student Submission B (Optional Plagiarism Check)</h3>
+        <span id="langBadgeB" style="font-size: 0.8rem; color: #94a3b8;">Language: Python</span>
+      </div>
+      <textarea id="codeB" placeholder="Write or paste second student submission here to check structural similarity...">def add_items(arr):
+    res = 0
+    for x in arr:
+        res += x
+    return res
+
+print(add_items([1, 2, 3]))</textarea>
+    </div>
+  </div>
+
+  <button onclick="runAgents()">🚀 Run Multi-Agent Pipeline</button>
+
+  <div class="grid" style="margin-top: 20px;">
+    <div class="card">
+      <h3>📊 Autonomous Grader & Plagiarism Report</h3>
+      <div class="score-big" id="scoreDisplay">-- / 100</div>
+      <p id="plagDisplay" style="color:#fbbf24; font-weight:600;">Plagiarism Check: Waiting for run...</p>
+      <ul id="feedbackList" style="line-height: 1.7; color: #cbd5e1;"></ul>
+    </div>
+
+    <div class="card">
+      <h3>🎙️ Interactive AI Coding Tutor (Text & Voice)</h3>
+      <div class="chat-box" id="chatBox">Tutor Agent: Select Python, C++, or Java, write your code, click "Run Multi-Agent Pipeline", and ask me why you lost marks or how to improve!</div>
+      <div class="chat-input">
+        <input type="text" id="userQuestion" placeholder="Ask: Why did I lose marks? / Check plagiarism...">
+        <button onclick="askTutor()" style="margin-top:0;">Ask</button>
+        <button class="mic-btn" onclick="startVoice()" style="margin-top:0;">🎤 Speak</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lastReport = null;
+
+    const starterTemplates = {
+      python: {
+        label: "Python",
+        codeA: `def calculate_sum(numbers):\n    total = 0\n    for n in numbers:\n        total += n\n    return total\n\nprint(calculate_sum([10, 20, 30]))`,
+        codeB: `def add_items(arr):\n    res = 0\n    for x in arr:\n        res += x\n    return res\n\nprint(add_items([1, 2, 3]))`
+      },
+      cpp: {
+        label: "C++",
+        codeA: `#include <iostream>\nusing namespace std;\n\nint calculateSum(int arr[], int n) {\n    int total = 0;\n    for(int i = 0; i < n; i++) {\n        total += arr[i];\n    }\n    return total;\n}\n\nint main() {\n    int nums[] = {10, 20, 30};\n    cout << calculateSum(nums, 3) << endl;\n    return 0;\n}`,
+        codeB: `#include <iostream>\nusing namespace std;\n\nint addItems(int a[], int size) {\n    int res = 0;\n    for(int j = 0; j < size; j++) {\n        res += a[j];\n    }\n    return res;\n}\n\nint main() {\n    int vals[] = {1, 2, 3};\n    cout << addItems(vals, 3) << endl;\n    return 0;\n}`
+      },
+      java: {
+        label: "Java",
+        codeA: `public class Main {\n    public static int calculateSum(int[] numbers) {\n        int total = 0;\n        for (int n : numbers) {\n            total += n;\n        }\n        return total;\n    }\n\n    public static void main(String[] args) {\n        int[] nums = {10, 20, 30};\n        System.out.println(calculateSum(nums));\n    }\n}`,
+        codeB: `public class Main {\n    public static int addItems(int[] arr) {\n        int res = 0;\n        for (int x : arr) {\n            res += x;\n        }\n        return res;\n    }\n\n    public static void main(String[] args) {\n        int[] vals = {1, 2, 3};\n        System.out.println(addItems(vals));\n    }\n}`
+      }
+    };
+
+    function switchLanguage() {
+      const lang = document.getElementById('langSelect').value;
+      const tpl = starterTemplates[lang];
+      document.getElementById('codeA').value = tpl.codeA;
+      document.getElementById('codeB').value = tpl.codeB;
+      document.getElementById('langBadgeB').innerText = `Language: ${tpl.label}`;
+    }
+
+    async function runAgents() {
+      const language = document.getElementById('langSelect').value;
+      const code_a = document.getElementById('codeA').value;
+      const code_b = document.getElementById('codeB').value;
+
+      const res = await fetch('/api/agent_grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, code_a, code_b })
+      });
+      const data = await res.json();
+      lastReport = data;
+
+      document.getElementById('scoreDisplay').innerText = data.grading.total_score + ' / 100';
+      const sim = data.plagiarism.similarity_percent;
+      document.getElementById('plagDisplay').innerText = sim !== null
+        ? `Similarity (${language.toUpperCase()}): ${sim}% — ${data.plagiarism.verdict} (AI Likelihood: ${data.plagiarism.ai_probability}%)`
+        : `AI Likelihood: ${data.plagiarism.ai_probability}% — ${data.plagiarism.verdict}`;
+
+      const list = document.getElementById('feedbackList');
+      list.innerHTML = '';
+      data.grading.feedback.forEach(item => {
+        const li = document.createElement('li');
+        li.innerText = item;
+        list.appendChild(li);
+      });
+    }
+
+    async function askTutor() {
+      const qInput = document.getElementById('userQuestion');
+      const question = qInput.value.trim();
+      if (!question) return;
+      const chatBox = document.getElementById('chatBox');
+      chatBox.innerText += `\n\nYou: ${question}`;
+      qInput.value = '';
+
+      const language = document.getElementById('langSelect').value;
+      const res = await fetch('/api/agent_tutor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language,
+          question,
+          code: document.getElementById('codeA').value,
+          report: lastReport
+        })
+      });
+      const data = await res.json();
+      chatBox.innerText += `\nTutor Agent: ${data.reply}`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function startVoice() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Voice input works best in Google Chrome!");
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.onresult = (event) => {
+        document.getElementById('userQuestion').value = event.results[0][0].transcript;
+        askTutor();
+      };
+      recognition.start();
+    }
+  </script>
+</body>
+</html>
